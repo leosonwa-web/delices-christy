@@ -1,0 +1,891 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#4F7A17">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Christy">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Les délices de Christy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F6F8EF; --ink:#16231D; --muted:#55655D; --line:#DDE3DE; --card:#FFFFFF;
+  --accent:#4F7A17; --accent-t:#EBF3D9; --ok-bg:#E8F1D3; --ok:#3B5A0F;
+  --warn-bg:#FDE8D5; --warn-line:#F1C7A0; --warn:#9A3F0C; --neutral-bg:#E3E7E4;
+  --head:'Bricolage Grotesque',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:'DM Sans',system-ui,-apple-system,'Segoe UI',sans-serif;-webkit-tap-highlight-color:transparent}
+button,input,select,textarea{font-family:inherit;font-size:16px;color:var(--ink)}
+a{color:inherit;text-decoration:none}
+#app{height:100vh;height:100dvh;display:flex;flex-direction:column;max-width:560px;margin:0 auto;background:var(--bg)}
+main{flex:1;min-height:0;overflow-y:auto;padding:16px 20px 28px;display:flex;flex-direction:column;gap:14px}
+nav{display:flex;flex-shrink:0;background:#fff;border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;min-height:64px;border:0;background:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--muted);font-size:11px;font-weight:500;cursor:pointer}
+nav button.on{color:var(--accent);font-weight:700}
+h1{margin:0;font:700 30px/1.15 var(--head)}
+h2{margin:0;font:600 19px/1.2 var(--head)}
+.muted{color:var(--muted)} .small{font-size:13px} .tiny{font-size:12px}
+.row{display:flex;align-items:center;gap:12px}
+.between{justify-content:space-between}
+.col{display:flex;flex-direction:column}
+.grow{flex:1;min-width:0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 16px}
+.card.warn{background:var(--warn-bg);border-color:var(--warn-line);color:var(--warn)}
+.card.accent{background:var(--accent);border-color:var(--accent);color:#fff}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.stat .lbl{font-size:13px;color:var(--muted)}
+.stat .val{font:700 28px/1.2 var(--head)}
+.stat .sub{font-size:12px;color:var(--muted)}
+.card.warn .lbl,.card.warn .sub{color:var(--warn)}
+.list{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:0 16px}
+.item{display:flex;align-items:center;gap:12px;min-height:64px;border-bottom:1px solid var(--line);width:100%;background:none;border-left:0;border-right:0;border-top:0;padding:0;text-align:left;cursor:pointer}
+.list > :last-child{border-bottom:0}
+.item.static{cursor:default}
+.avatar{width:40px;height:40px;border-radius:20px;background:var(--accent-t);color:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;flex-shrink:0}
+.avatar.big{width:52px;height:52px;border-radius:26px;font-size:18px}
+.name{font-size:16px;font-weight:500}
+.neg{color:var(--warn);font-weight:700} .pos{color:var(--accent);font-weight:700}
+.pill{font-size:12px;font-weight:700;padding:5px 10px;border-radius:999px;white-space:nowrap}
+.pill.ok{background:var(--ok-bg);color:var(--ok)} .pill.bad{background:var(--warn-bg);color:var(--warn)} .pill.neutral{background:var(--neutral-bg);color:var(--ink)}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;min-height:52px;padding:0 18px;border-radius:14px;border:2px solid var(--accent);background:#fff;color:var(--accent);font-weight:700;font-size:16px;cursor:pointer;text-align:center}
+.btn.primary{background:var(--accent);color:#fff}
+.btn.danger{border-color:var(--warn);color:var(--warn)}
+.btn.small{min-height:44px;padding:0 14px;font-size:14px;border-radius:10px}
+.btn[disabled],.btn.disabled{opacity:.45;pointer-events:none}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{min-height:44px;padding:0 16px;border:1px solid #C9D1CC;border-radius:999px;background:#fff;color:#3E4C45;font-size:14px;font-weight:500;cursor:pointer}
+.chip.on{background:var(--ink);border-color:var(--ink);color:#fff;font-weight:700}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:14px;font-weight:500}
+.field input,.field select,.field textarea{width:100%;height:52px;padding:0 14px;border:1px solid #C9D1CC;border-radius:12px;background:#fff}
+.search{position:relative}
+.search svg{position:absolute;left:14px;top:16px}
+.search input{width:100%;height:52px;padding:0 16px 0 44px;border:1px solid #C9D1CC;border-radius:14px;background:#fff}
+.back{display:flex;align-items:center;gap:4px;min-height:44px;color:var(--accent);font-weight:700;font-size:15px;background:none;border:0;padding:0;cursor:pointer;align-self:flex-start}
+.chipbtn{display:flex;align-items:center;gap:4px;min-height:44px;margin:-12px 0;padding:0 12px;border:1px solid #C9D1CC;border-radius:999px;background:#fff;color:var(--accent);font-size:13px;font-weight:700;cursor:pointer}
+.datebar{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.roundbtn{width:44px;height:44px;border:1px solid #C9D1CC;border-radius:22px;background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+.absbtn{min-height:44px;padding:0 12px;border:1px solid #C9D1CC;border-radius:10px;background:#fff;color:#3E4C45;font-size:13px;font-weight:500;cursor:pointer}
+.absbtn.on{border:2px solid #55655D;background:var(--neutral-bg);color:var(--ink);font-weight:700}
+.logo{width:84px;height:65px;object-fit:contain;border-radius:10px;flex-shrink:0}
+.overlay{position:fixed;inset:0;background:rgba(22,35,29,.45);z-index:20}
+.sheet{position:fixed;left:0;right:0;bottom:0;max-width:560px;margin:0 auto;max-height:92vh;max-height:92dvh;display:flex;flex-direction:column;background:#fff;border-radius:20px 20px 0 0;z-index:21;padding-bottom:env(safe-area-inset-bottom)}
+.sheet-h{display:flex;align-items:center;justify-content:space-between;padding:14px 20px 4px}
+.sheet-b{padding:8px 20px;overflow-y:auto;display:flex;flex-direction:column;gap:14px}
+.sheet-f{display:flex;gap:10px;padding:12px 20px 16px}
+.sheet-f .btn{flex:1}
+.x{width:44px;height:44px;border:0;background:none;font-size:28px;line-height:1;color:var(--muted);cursor:pointer}
+.err{color:var(--warn);font-size:14px;font-weight:700;padding:0 20px;min-height:0}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 18px;border-radius:12px;font-size:14px;z-index:30;max-width:90vw;text-align:center}
+.hist .item{min-height:56px}
+.strike{text-decoration:line-through;color:var(--muted)}
+.dot{display:inline-block;width:8px;height:8px;border-radius:4px;margin-right:6px;background:#C9D1CC}
+.dot.ok{background:var(--accent)} .dot.bad{background:var(--warn)}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="sheet-root"></div>
+<div id="toast-root"></div>
+
+<script>
+(function () {
+'use strict';
+
+/* =====================================================================
+   RÉGLAGE FIREBASE (optionnel)
+   - Laisser null : l'application garde tout sur le téléphone (mode local).
+   - Pour synchroniser : coller ici la configuration web de ton projet Firebase,
+     par exemple { apiKey: "...", authDomain: "...", databaseURL: "...", projectId: "...", appId: "..." }
+   ===================================================================== */
+var FIREBASE_CONFIG = null;
+var FB_APP = 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+var FB_DB = 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+var APP_VERSION = '1.0.0 (étape 1)';
+
+/* ---------- Utilitaires de date (toujours en UTC pour éviter les décalages) ---------- */
+function pad(n) { return (n < 10 ? '0' : '') + n; }
+function todayISO() { var d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+function toUTC(iso) { var p = iso.split('-'); return Date.UTC(+p[0], +p[1] - 1, +p[2]); }
+function fromUTC(ms) { var d = new Date(ms); return d.getUTCFullYear() + '-' + pad(d.getUTCMonth() + 1) + '-' + pad(d.getUTCDate()); }
+function addDays(iso, n) { return fromUTC(toUTC(iso) + n * 86400000); }
+function dow(iso) { return new Date(toUTC(iso)).getUTCDay(); }
+function isWeekend(iso) { var w = dow(iso); return w === 0 || w === 6; }
+function validISO(s) { return /^\d{4}-\d{2}-\d{2}$/.test(s || '') && fromUTC(toUTC(s)) === s; }
+function fmtDate(iso, long) {
+  if (!validISO(iso)) return '';
+  var o = long ? { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' } : { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' };
+  var s = new Date(toUTC(iso)).toLocaleDateString('fr-FR', o);
+  return long ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+}
+function fmtDay(iso) { return new Date(toUTC(iso)).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }); }
+function daysBetween(a, b) { return Math.round((toUTC(b) - toUTC(a)) / 86400000); }
+
+/* ---------- Utilitaires divers ---------- */
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function norm(s) { return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim(); }
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+function sum(arr) { var t = 0; for (var i = 0; i < arr.length; i++) t += arr[i]; return t; }
+var nf = new Intl.NumberFormat('fr-FR');
+function num(n) { return nf.format(Math.abs(n)).replace(/[  ]/g, ' '); }
+function fcfa(n) { return (n < 0 ? '−' : '') + num(n) + ' FCFA'; }
+function initials(name) { var p = String(name || '?').trim().split(/\s+/); return ((p[0] || '?').charAt(0) + (p[1] ? p[1].charAt(0) : '')).toUpperCase(); }
+function parseAmount(s) { var t = String(s || '').replace(/[\s  ]/g, '').replace(',', '.'); if (!/^\d+(\.\d+)?$/.test(t)) return NaN; return Math.round(parseFloat(t)); }
+
+/* ---------- Icônes ---------- */
+var IC = {
+  home: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8M5 10v10h14V10"/></svg>',
+  users: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><circle cx="17.5" cy="9" r="2.5"/><path d="M17 14.2c2.6.2 4.5 2.1 4.5 5.3"/></svg>',
+  meal: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/></svg>',
+  cog: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
+  plus: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
+  search: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#55655D" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/></svg>',
+  left: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>',
+  right: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>',
+  chev: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>',
+  check: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>'
+};
+
+/* =====================================================================
+   DONNÉES
+   S.eleves     {id: {id, nom, classe, tel, note, depuis, retireLe}}
+   S.versements {id: {id, eleve, date, montant, type, note, annule}}   type: 'versement' | 'depart'
+   S.absences   {date: {eleveId: true}}
+   S.annees     {id: {id, label, debut, fin}}
+   S.joursFermes{id: {id, debut, fin, motif}}
+   S.prix       {id: {id, depuis, montant}}
+   Les soldes ne sont jamais stockés : ils sont recalculés (versements - repas).
+   ===================================================================== */
+var LS_KEY = 'christy-v1', LS_PENDING = 'christy-v1-pending', LS_BACKUP = 'christy-v1-derniere-sauvegarde', LS_SYNCED = 'christy-v1-sync-ok';
+var S = emptyState();
+var pending = [];
+var cache = null;
+
+function emptyState() { return { eleves: {}, versements: {}, absences: {}, annees: {}, joursFermes: {}, prix: {} }; }
+function normalizeState(v) {
+  var s = emptyState();
+  if (v && typeof v === 'object') { Object.keys(s).forEach(function (k) { if (v[k] && typeof v[k] === 'object') s[k] = v[k]; }); }
+  return s;
+}
+function loadLocal() {
+  try {
+    var raw = localStorage.getItem(LS_KEY);
+    if (raw) S = normalizeState(JSON.parse(raw));
+    var p = localStorage.getItem(LS_PENDING);
+    if (p) pending = JSON.parse(p) || [];
+  } catch (e) { /* données illisibles : on repart de zéro */ }
+}
+function saveLocal() {
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify(S));
+    localStorage.setItem(LS_PENDING, JSON.stringify(pending));
+  } catch (e) { toast('Impossible d’enregistrer sur ce téléphone (stockage plein ou bloqué).'); }
+}
+function touch() { cache = null; }
+
+function setAt(obj, path, value) {
+  var o = obj, i;
+  for (i = 0; i < path.length - 1; i++) {
+    if (o[path[i]] == null || typeof o[path[i]] !== 'object') { if (value === null) return; o[path[i]] = {}; }
+    o = o[path[i]];
+  }
+  var last = path[path.length - 1];
+  if (value === null) {
+    delete o[last];
+    // supprime les dossiers devenus vides (ex. absences du jour)
+    for (var depth = path.length - 1; depth >= 2; depth--) {
+      var parent = obj;
+      for (i = 0; i < depth - 1; i++) parent = parent[path[i]];
+      var key = path[depth - 1];
+      if (parent[key] && Object.keys(parent[key]).length === 0) delete parent[key]; else break;
+    }
+  } else { o[last] = value; }
+}
+function commit(path, value) {
+  if (value === undefined) value = null;
+  setAt(S, path, value);
+  touch();
+  if (FIREBASE_CONFIG) pending.push({ p: path.join('/'), v: value });
+  saveLocal();
+  sync();
+}
+
+function ensureDefaults() {
+  if (Object.keys(S.prix).length === 0) commit(['prix', 'p0'], { id: 'p0', depuis: '2000-01-01', montant: 600 });
+}
+
+/* ---------- Synchronisation Firebase (optionnelle) ---------- */
+var fb = null, syncing = false, syncState = FIREBASE_CONFIG ? 'attente' : 'local', syncError = '';
+function ensureFb() {
+  if (fb) return Promise.resolve(fb);
+  if (!FIREBASE_CONFIG) return Promise.resolve(null);
+  return Promise.all([import(FB_APP), import(FB_DB)]).then(function (m) {
+    var app = m[0].initializeApp(FIREBASE_CONFIG);
+    fb = { d: m[1].getDatabase(app), ref: m[1].ref, get: m[1].get, set: m[1].set };
+    return fb;
+  }).catch(function () { return null; });
+}
+function refOf(f, p) { return p === '__root' ? f.ref(f.d, 'christy') : f.ref(f.d, 'christy/' + p); }
+function sync() {
+  if (!FIREBASE_CONFIG || syncing) return;
+  syncing = true;
+  var f;
+  ensureFb().then(function (r) {
+    f = r;
+    if (!navigator.onLine || !f) { syncState = 'horsligne'; throw new Error('stop'); }
+    function flush() {
+      if (!pending.length) return Promise.resolve();
+      var op = pending[0];
+      return f.set(refOf(f, op.p), op.v).then(function () { pending.shift(); saveLocal(); return flush(); });
+    }
+    return flush().then(function () { return f.get(f.ref(f.d, 'christy')); }).then(function (snap) {
+      var val = snap.val();
+      if (val) {
+        if (!localStorage.getItem(LS_SYNCED) && Object.keys(S.eleves).length) {
+          try { localStorage.setItem('christy-v1-copie-avant-sync', JSON.stringify(S)); } catch (e) { /* ignore */ }
+        }
+        S = normalizeState(val);
+        pending.forEach(function (op) { if (op.p !== '__root') setAt(S, op.p.split('/'), op.v); });
+      } else if (!pending.length) {
+        return f.set(f.ref(f.d, 'christy'), S);
+      }
+    }).then(function () {
+      try { localStorage.setItem(LS_SYNCED, '1'); } catch (e) { /* ignore */ }
+      touch(); saveLocal(); ensureDefaultsSafe();
+      syncState = pending.length ? 'attente' : 'ok'; syncError = '';
+    });
+  }).catch(function (e) {
+    if (e && e.message !== 'stop') { syncState = 'erreur'; syncError = (e && e.message) || ''; }
+  }).then(function () {
+    syncing = false;
+    if (pending.length && syncState === 'ok') sync();
+    refreshIfIdle();
+  });
+}
+function ensureDefaultsSafe() { if (Object.keys(S.prix).length === 0) { S.prix.p0 = { id: 'p0', depuis: '2000-01-01', montant: 600 }; pending.push({ p: 'prix/p0', v: S.prix.p0 }); touch(); saveLocal(); } }
+function syncLabel() {
+  var n = pending.length;
+  if (syncState === 'local') return { cls: '', txt: 'Mode local : les données restent sur ce téléphone.' };
+  if (syncState === 'ok') return { cls: 'ok', txt: 'Synchronisé avec Firebase.' };
+  if (syncState === 'horsligne') return { cls: 'bad', txt: 'Hors connexion' + (n ? ' : ' + n + ' modification(s) en attente.' : '.') };
+  if (syncState === 'erreur') return { cls: 'bad', txt: 'Erreur de synchronisation' + (syncError ? ' (' + syncError + ')' : '') + (n ? ' : ' + n + ' modification(s) en attente.' : '.') };
+  return { cls: '', txt: 'Synchronisation en cours…' };
+}
+
+/* =====================================================================
+   CALCULS
+   ===================================================================== */
+function yearsList() {
+  return Object.values(S.annees).filter(function (a) { return validISO(a.debut) && validISO(a.fin); })
+    .sort(function (a, b) { return a.debut < b.debut ? -1 : 1; });
+}
+function currentYear() {
+  var all = Object.values(S.annees).sort(function (a, b) { return (a.debut || '') < (b.debut || '') ? -1 : 1; });
+  return all.length ? all[all.length - 1] : null;
+}
+function yearLabel(y) {
+  if (!y || !validISO(y.debut) || !validISO(y.fin)) return 'Année scolaire';
+  var a = y.debut.slice(0, 4), b = y.fin.slice(0, 4);
+  return a === b ? a : a + '–' + b;
+}
+function ctx() {
+  if (cache) return cache;
+  var days = [], seen = {}, closed = Object.values(S.joursFermes);
+  yearsList().forEach(function (y) {
+    var d = y.debut, guard = 0;
+    while (d <= y.fin && guard++ < 800) {
+      if (!isWeekend(d) && !seen[d] && !closed.some(function (c) { return d >= c.debut && d <= (c.fin || c.debut); })) { seen[d] = 1; days.push(d); }
+      d = addDays(d, 1);
+    }
+  });
+  days.sort();
+  var prix = Object.values(S.prix).sort(function (a, b) { return a.depuis < b.depuis ? -1 : 1; });
+  var price = {};
+  days.forEach(function (d) { var m = 0; for (var i = 0; i < prix.length; i++) { if (prix[i].depuis <= d) m = prix[i].montant; } price[d] = m; });
+  var vers = {};
+  Object.values(S.versements).forEach(function (v) { (vers[v.eleve] = vers[v.eleve] || []).push(v); });
+  cache = { days: days, price: price, vers: vers, prix: prix };
+  return cache;
+}
+function priceOn(d) {
+  var p = ctx().prix, m = 0;
+  for (var i = 0; i < p.length; i++) { if (p[i].depuis <= d) m = p[i].montant; }
+  return m;
+}
+function currentPrice() { return priceOn(todayISO()); }
+function dayInfo(d) {
+  var y = yearsList();
+  if (!y.length) return { school: false, reason: 'Les dates de l’année scolaire ne sont pas encore entrées', code: 'noyear' };
+  if (!y.some(function (a) { return d >= a.debut && d <= a.fin; })) return { school: false, reason: 'Hors année scolaire', code: 'outside' };
+  if (isWeekend(d)) return { school: false, reason: 'Week-end', code: 'weekend' };
+  var c = Object.values(S.joursFermes).filter(function (c) { return d >= c.debut && d <= (c.fin || c.debut); })[0];
+  if (c) return { school: false, reason: 'Jour sans repas' + (c.motif ? ' : ' + c.motif : ''), code: 'closed' };
+  return { school: true, reason: '', code: 'ok' };
+}
+function isAbs(d, id) { return !!(S.absences[d] && S.absences[d][id]); }
+function eleveActiveOn(e, d) { return (e.depuis || '0000-00-00') <= d && (!e.retireLe || d < e.retireLe); }
+function activeStudents(d) { return Object.values(S.eleves).filter(function (e) { return eleveActiveOn(e, d); }); }
+function isRetired(e) { return !!e.retireLe && e.retireLe <= todayISO(); }
+function balanceOf(e, upTo) {
+  var c = ctx(), verse = 0, debit = 0, repas = 0, abs = 0, i;
+  var vs = c.vers[e.id] || [];
+  for (i = 0; i < vs.length; i++) { if (!vs[i].annule && vs[i].date <= upTo) verse += vs[i].montant; }
+  var from = e.depuis || '0000-00-00', to = e.retireLe;
+  for (i = 0; i < c.days.length; i++) {
+    var d = c.days[i];
+    if (d > upTo) break;
+    if (d < from) continue;
+    if (to && d >= to) break;
+    if (isAbs(d, e.id)) { abs++; continue; }
+    debit += c.price[d]; repas++;
+  }
+  return { solde: verse - debit, verse: verse, debit: debit, repas: repas, abs: abs };
+}
+function historyOf(e) {
+  var t = todayISO(), c = ctx(), ev = [], i;
+  (c.vers[e.id] || []).forEach(function (v) { if (v.date <= t) ev.push({ date: v.date, k: 0, type: 'v', v: v }); });
+  var from = e.depuis || '0000-00-00', to = e.retireLe;
+  for (i = 0; i < c.days.length; i++) {
+    var d = c.days[i];
+    if (d > t) break;
+    if (d < from) continue;
+    if (to && d >= to) break;
+    ev.push({ date: d, k: 1, type: isAbs(d, e.id) ? 'abs' : 'meal', amt: c.price[d] });
+  }
+  ev.sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : a.k - b.k; });
+  var run = 0;
+  ev.forEach(function (x) {
+    if (x.type === 'v') { if (!x.v.annule) run += x.v.montant; }
+    else if (x.type === 'meal') run -= x.amt;
+    x.run = run;
+  });
+  return ev.reverse();
+}
+function waLink(e, solde) {
+  var d = String(e.tel || '').replace(/[^\d]/g, '');
+  if (d.indexOf('00') === 0) d = d.slice(2);
+  if (d.length === 9) d = '237' + d;
+  if (d.length < 8) return '';
+  var prenom = String(e.nom || '').split(/\s+/)[0];
+  var msg = 'Bonjour, le compte de ' + prenom + ' est à ' + fcfa(solde) + '. Merci de faire un versement. – Les délices de Christy';
+  return 'https://wa.me/' + d + '?text=' + encodeURIComponent(msg);
+}
+
+/* =====================================================================
+   INTERFACE
+   ===================================================================== */
+var V = { name: 'home', id: null, date: todayISO() };
+var ui = { q: '', filter: 'tous', mq: '', mfilter: 'tous', histN: 40 };
+var appEl = document.getElementById('app');
+var sheetRoot = document.getElementById('sheet-root');
+var needsRefresh = false;
+
+function toast(msg) {
+  msg = String(msg).replace(/\.\.$/, '.');
+  var r = document.getElementById('toast-root');
+  r.innerHTML = '<div class="toast" role="status">' + esc(msg) + '</div>';
+  clearTimeout(toast.t);
+  toast.t = setTimeout(function () { r.innerHTML = ''; }, 3200);
+}
+function sheetOpen() { return !!sheetRoot.firstChild; }
+function refreshIfIdle() {
+  var a = document.activeElement;
+  if (sheetOpen() || (a && /INPUT|SELECT|TEXTAREA/.test(a.tagName))) { needsRefresh = true; return; }
+  render();
+}
+
+function go(name, id, opts) {
+  V.name = name; V.id = id || null;
+  if (name === 'meals' && !(opts && opts.keepDate)) V.date = todayISO();
+  if (name === 'students') { ui.q = ''; }
+  try { history.pushState({ name: V.name, id: V.id, date: V.date }, ''); } catch (e) { /* ignore */ }
+  render(); var m = document.querySelector('main'); if (m) m.scrollTop = 0;
+}
+window.addEventListener('popstate', function (ev) {
+  var s = ev.state || { name: 'home', id: null };
+  V.name = s.name; V.id = s.id; if (s.date) V.date = s.date;
+  closeSheet(); render();
+});
+
+function navHtml() {
+  var tabs = [['home', 'Accueil', IC.home], ['students', 'Élèves', IC.users], ['meals', 'Repas', IC.meal], ['settings', 'Réglages', IC.cog]];
+  var cur = V.name === 'student' ? 'students' : V.name === 'year' ? 'settings' : V.name;
+  return '<nav aria-label="Menu principal">' + tabs.map(function (t) {
+    return '<button type="button" class="' + (cur === t[0] ? 'on' : '') + '" data-act="nav" data-v="' + t[0] + '">' + t[2] + t[1] + '</button>';
+  }).join('') + '</nav>';
+}
+
+function render() {
+  needsRefresh = false;
+  var old = document.querySelector('main');
+  var sc = old ? old.scrollTop : 0;
+  var body;
+  try {
+    body = V.name === 'home' ? viewHome() : V.name === 'students' ? viewStudents() : V.name === 'student' ? viewStudent() :
+      V.name === 'meals' ? viewMeals() : V.name === 'year' ? viewYear() : viewSettings();
+  } catch (err) { body = '<div class="card warn">Une erreur est survenue : ' + esc(err.message) + '</div>'; }
+  appEl.innerHTML = '<main>' + body + '</main>' + navHtml();
+  var m = document.querySelector('main'); if (m) m.scrollTop = sc;
+}
+
+/* ---------- Accueil ---------- */
+function viewHome() {
+  var t = todayISO(), info = dayInfo(t), y = currentYear();
+  var act = activeStudents(t), abs = act.filter(function (e) { return isAbs(t, e.id); }).length;
+  var served = info.school ? act.length - abs : 0;
+  var vToday = sum(Object.values(S.versements).filter(function (v) { return !v.annule && v.date === t && v.type === 'versement'; }).map(function (v) { return v.montant; }));
+  var debts = Object.values(S.eleves).filter(function (e) { return !isRetired(e); }).map(function (e) { return balanceOf(e, t).solde; }).filter(function (s) { return s < 0; });
+  var lastV = Object.values(S.versements).filter(function (v) { return !v.annule && v.type === 'versement' && S.eleves[v.eleve]; })
+    .sort(function (a, b) { return a.date < b.date ? 1 : a.date > b.date ? -1 : (a.id < b.id ? 1 : -1); }).slice(0, 5);
+  var lastB = localStorage.getItem(LS_BACKUP), bTxt = '', bWarn = false;
+  if (FIREBASE_CONFIG) { bTxt = ''; }
+  else if (!lastB) { bTxt = 'Aucune sauvegarde faite pour le moment.'; bWarn = Object.keys(S.eleves).length > 0; }
+  else { var dd = daysBetween(lastB, t); bTxt = 'Dernière sauvegarde : ' + (dd <= 0 ? 'aujourd’hui' : 'il y a ' + dd + ' jour' + (dd > 1 ? 's' : '')) + '.'; bWarn = dd >= 7; }
+  var sl = syncLabel();
+
+  var html = '<div class="row between" style="gap:12px"><div class="col grow" style="gap:2px">' +
+    '<div class="muted small">Bonjour Christy</div><h1>Aujourd’hui</h1>' +
+    '<div class="row between" style="gap:8px"><div class="muted small">' + esc(fmtDate(t, true)) + '</div>' +
+    '<button type="button" class="chipbtn" data-act="go-year">' + esc(yearLabel(y)) + IC.chev + '</button></div></div>' +
+    '<img class="logo" src="logo.png" alt="Logo Les délices de Christy"></div>';
+
+  if (info.code === 'noyear') {
+    html += '<div class="card warn"><div style="font-weight:700">Pour commencer</div><div class="small" style="margin:4px 0 10px">Entre la date de la première livraison et le dernier jour d’école. Tant que ce n’est pas fait, personne n’est débité.</div>' +
+      '<button type="button" class="btn small" data-act="go-year">Entrer les dates</button></div>';
+  } else if (!info.school) {
+    html += '<div class="card"><div style="font-weight:700">Pas de repas aujourd’hui</div><div class="small muted">' + esc(info.reason) + '</div></div>';
+  }
+  if (!Object.keys(S.eleves).length) {
+    html += '<div class="card"><div style="font-weight:700">Aucun élève pour le moment</div><div class="small muted" style="margin:4px 0 10px">Ajoute les élèves un par un (tu peux aussi saisir leur solde de départ).</div>' +
+      '<button type="button" class="btn small primary" data-act="add-student">' + IC.plus + 'Ajouter un élève</button></div>';
+  }
+
+  html += '<div class="grid2">' +
+    '<div class="card stat"><div class="lbl">Repas servis</div><div class="val">' + served + '</div><div class="sub">sur ' + act.length + ' · ' + abs + ' absent' + (abs > 1 ? 's' : '') + '</div></div>' +
+    '<div class="card stat"><div class="lbl">Versements du jour</div><div class="val pos">' + num(vToday) + '</div><div class="sub">FCFA reçus aujourd’hui</div></div>' +
+    '<div class="card stat warn"><div class="lbl">Total dû par les parents</div><div class="val">' + num(-sum(debts)) + '</div><div class="sub">FCFA · ' + debts.length + ' élève' + (debts.length > 1 ? 's' : '') + '</div></div>' +
+    '<div class="card stat"><div class="lbl">Prix du repas</div><div class="val">' + num(currentPrice()) + '</div><div class="sub">FCFA</div></div></div>';
+
+  html += '<button type="button" class="btn primary" style="min-height:56px;font-size:17px" data-act="go-meals">' + IC.check + 'Noter les absents du jour</button>' +
+    '<button type="button" class="btn" data-act="add-versement">' + IC.plus + 'Ajouter un versement</button>';
+
+  html += '<div class="row between"><h2>Derniers versements</h2><button type="button" class="back" style="min-height:32px" data-act="nav" data-v="students">Voir les élèves</button></div>';
+  if (lastV.length) {
+    html += '<div class="list">' + lastV.map(function (v) {
+      var e = S.eleves[v.eleve];
+      return '<button type="button" class="item" data-act="open-student" data-id="' + esc(e.id) + '"><div class="col grow"><div class="name">' + esc(e.nom) + '</div><div class="small muted">' + esc(fmtDate(v.date)) + (e.classe ? ' · ' + esc(e.classe) : '') + '</div></div><div class="pos">+ ' + num(v.montant) + ' FCFA</div></button>';
+    }).join('') + '</div>';
+  } else { html += '<div class="card small muted">Aucun versement noté pour le moment.</div>'; }
+
+  html += '<div class="small ' + (bWarn ? 'neg' : 'muted') + '"' + (bTxt ? '' : ' hidden') + '>' + esc(bTxt) + (bWarn ? ' <button type="button" class="back" style="display:inline-flex;min-height:32px" data-act="nav" data-v="settings">Sauvegarder</button>' : '') + '</div>' +
+    '<div class="small muted"><span class="dot ' + sl.cls + '"></span>' + esc(sl.txt) + '</div>';
+  return html;
+}
+
+/* ---------- Liste des élèves ---------- */
+function studentRow(e, t) {
+  var b = balanceOf(e, t), retired = isRetired(e);
+  var right = retired ? '<span class="pill neutral">Retiré</span>' :
+    '<div class="col" style="align-items:flex-end"><div class="' + (b.solde < 0 ? 'neg' : 'pos') + '">' + fcfa(b.solde) + '</div><div class="tiny ' + (b.solde < 0 ? 'neg' : 'pos') + '">' + (b.solde < 0 ? 'À payer' : 'En règle') + '</div></div>';
+  return '<button type="button" class="item" data-act="open-student" data-id="' + esc(e.id) + '"><div class="avatar">' + esc(initials(e.nom)) + '</div><div class="col grow"><div class="name">' + esc(e.nom) + '</div><div class="small muted">' + esc(e.classe || 'Classe non notée') + (e.note ? ' · ' + esc(e.note) : '') + '</div></div>' + right + '</button>';
+}
+function studentListHtml() {
+  var t = todayISO(), q = norm(ui.q), f = ui.filter;
+  var rows = Object.values(S.eleves).filter(function (e) {
+    if (q && norm(e.nom + ' ' + (e.classe || '')).indexOf(q) < 0) return false;
+    return f === 'retires' ? isRetired(e) : !isRetired(e);
+  }).map(function (e) { return { e: e, b: balanceOf(e, t) }; });
+  if (f === 'dette') rows = rows.filter(function (r) { return r.b.solde < 0; });
+  if (f === 'ok') rows = rows.filter(function (r) { return r.b.solde >= 0; });
+  rows.sort(function (a, b) { return f === 'dette' ? a.b.solde - b.b.solde : norm(a.e.nom) < norm(b.e.nom) ? -1 : 1; });
+  if (!rows.length) return '<div class="card small muted">' + (Object.keys(S.eleves).length ? 'Aucun élève ne correspond.' : 'Aucun élève pour le moment. Touche « Élève » pour en ajouter un.') + '</div>';
+  return '<div class="list">' + rows.map(function (r) { return studentRow(r.e, t); }).join('') + '</div>';
+}
+function viewStudents() {
+  var nAct = Object.values(S.eleves).filter(function (e) { return !isRetired(e); }).length;
+  function chip(v, l) { return '<button type="button" class="chip ' + (ui.filter === v ? 'on' : '') + '" data-act="filter" data-v="' + v + '">' + l + '</button>'; }
+  return '<div class="row between"><div class="col"><h1>Élèves</h1><div class="muted small">' + nAct + ' élève' + (nAct > 1 ? 's' : '') + ' · touche un nom pour ouvrir son compte</div></div>' +
+    '<button type="button" class="btn primary small" data-act="add-student">' + IC.plus + 'Élève</button></div>' +
+    '<div class="search">' + IC.search + '<input id="q" type="search" placeholder="Chercher un prénom ou une classe" aria-label="Chercher un élève" value="' + esc(ui.q) + '"></div>' +
+    '<div class="chips">' + chip('tous', 'Tous') + chip('dette', 'À payer') + chip('ok', 'En règle') + chip('retires', 'Retirés') + '</div>' +
+    '<div id="list">' + studentListHtml() + '</div>';
+}
+
+/* ---------- Fiche d'un élève ---------- */
+function viewStudent() {
+  var e = S.eleves[V.id];
+  if (!e) return '<button type="button" class="back" data-act="nav" data-v="students">' + IC.left + 'Élèves</button><div class="card">Cet élève n’existe plus.</div>';
+  var t = todayISO(), b = balanceOf(e, t), retired = isRetired(e), wa = waLink(e, b.solde);
+  var hist = historyOf(e), shown = hist.slice(0, ui.histN);
+  var html = '<button type="button" class="back" data-act="nav" data-v="students">' + IC.left + 'Élèves</button>' +
+    '<div class="row"><div class="avatar big">' + esc(initials(e.nom)) + '</div><div class="col grow"><h1 style="font-size:26px">' + esc(e.nom) + '</h1>' +
+    '<div class="muted small">' + esc(e.classe || 'Classe non notée') + (e.tel ? ' · ' + esc(e.tel) : '') + '</div>' + (e.note ? '<div class="small">' + esc(e.note) + '</div>' : '') + '</div>' +
+    '<button type="button" class="btn small" data-act="edit-student" data-id="' + esc(e.id) + '">Modifier</button></div>';
+  if (retired) html += '<div class="card"><div style="font-weight:700">Élève retiré depuis le ' + esc(fmtDay(e.retireLe)) + '</div><div class="small muted">Il n’est plus débité et n’apparaît plus dans la liste du jour. L’historique reste.</div></div>';
+  html += '<div class="card ' + (b.solde < 0 ? 'warn' : 'accent') + '" style="padding:16px 20px"><div class="small">Solde du compte</div>' +
+    '<div style="font:700 38px/1.15 var(--head)">' + fcfa(b.solde) + '</div>' +
+    '<div class="small" style="font-weight:700">' + (b.solde < 0 ? 'À payer · l’élève est servi quand même' : 'En règle') + '</div></div>' +
+    '<div class="row" style="gap:10px"><button type="button" class="btn primary grow" data-act="add-versement" data-id="' + esc(e.id) + '">' + IC.plus + 'Versement</button>' +
+    '<a class="btn grow ' + (wa ? '' : 'disabled') + '" ' + (wa ? 'href="' + esc(wa) + '" target="_blank" rel="noopener"' : '') + '>Rappel WhatsApp</a></div>';
+  if (!wa && b.solde < 0) html += '<div class="small muted">Ajoute le numéro du parent (bouton Modifier) pour activer le rappel WhatsApp.</div>';
+  html += '<div class="small muted">' + b.repas + ' repas débités · ' + b.abs + ' absence' + (b.abs > 1 ? 's' : '') + ' · ' + fcfa(b.verse) + ' versés au total</div>';
+  html += '<h2>Historique</h2>';
+  if (!shown.length) html += '<div class="card small muted">Rien pour le moment.</div>';
+  else {
+    html += '<div class="list hist">' + shown.map(function (x) {
+      var left, right;
+      if (x.type === 'v') {
+        var v = x.v, lbl = v.type === 'depart' ? 'Solde de départ' : 'Versement';
+        left = '<div class="name ' + (v.annule ? 'strike' : '') + '">' + lbl + ' · ' + esc(fmtDate(x.date)) + '</div><div class="tiny muted">' + (v.annule ? 'Annulé' : 'solde ' + fcfa(x.run)) + (v.note ? ' · ' + esc(v.note) : '') +
+          (!v.annule ? ' · <button type="button" class="back" style="display:inline-flex;min-height:28px;font-size:12px;color:var(--warn)" data-act="cancel-versement" data-id="' + esc(v.id) + '">Annuler</button>' : '') + '</div>';
+        right = '<div class="' + (v.annule ? 'strike' : v.montant < 0 ? 'neg' : 'pos') + '">' + (v.montant < 0 ? '− ' : '+ ') + num(v.montant) + ' FCFA</div>';
+      } else if (x.type === 'abs') {
+        left = '<div class="name">Absent · ' + esc(fmtDate(x.date)) + '</div><div class="tiny muted">solde ' + fcfa(x.run) + ' · non débité</div>';
+        right = '<div class="muted">0 FCFA</div>';
+      } else {
+        left = '<div class="name">Repas · ' + esc(fmtDate(x.date)) + '</div><div class="tiny muted">solde ' + fcfa(x.run) + '</div>';
+        right = '<div style="font-weight:700">− ' + num(x.amt) + ' FCFA</div>';
+      }
+      return '<div class="item static"><div class="col grow">' + left + '</div>' + right + '</div>';
+    }).join('') + '</div>';
+    if (hist.length > shown.length) html += '<button type="button" class="btn" data-act="more-hist">Voir plus (' + (hist.length - shown.length) + ')</button>';
+  }
+  return html;
+}
+
+/* ---------- Repas du jour ---------- */
+function mealListHtml() {
+  var d = V.date, t = todayISO(), info = dayInfo(d), q = norm(ui.mq), f = ui.mfilter;
+  if (!info.school) return '<div class="card"><div style="font-weight:700">Pas de repas ce jour-là</div><div class="small muted">' + esc(info.reason) + '</div></div>';
+  var rows = activeStudents(d).filter(function (e) { return !q || norm(e.nom + ' ' + (e.classe || '')).indexOf(q) >= 0; })
+    .map(function (e) { var a = isAbs(d, e.id), b = d <= t ? balanceOf(e, d) : null; return { e: e, a: a, b: b }; });
+  if (f === 'abs') rows = rows.filter(function (r) { return r.a; });
+  if (f === 'dette') rows = rows.filter(function (r) { return r.b && !r.a && r.b.solde < 0; });
+  rows.sort(function (a, b) { return f === 'dette' && a.b && b.b ? a.b.solde - b.b.solde : norm(a.e.nom) < norm(b.e.nom) ? -1 : 1; });
+  if (!rows.length) return '<div class="card small muted">' + (activeStudents(d).length ? 'Aucun élève ne correspond.' : 'Aucun élève à cette date.') + '</div>';
+  return '<div class="list">' + rows.map(function (r) {
+    var pill = r.a ? '<span class="pill neutral">Non débité</span>' : !r.b ? '<span class="pill neutral">À venir</span>' : r.b.solde < 0 ? '<span class="pill bad">À payer</span>' : '<span class="pill ok">Payé</span>';
+    return '<div class="item static"><button type="button" class="col grow" style="background:none;border:0;padding:0;text-align:left;cursor:pointer" data-act="open-student" data-id="' + esc(r.e.id) + '"><div class="name">' + esc(r.e.nom) + '</div><div class="tiny ' + (r.b && r.b.solde < 0 ? 'neg' : 'muted') + '">' + esc(r.e.classe || '') + (r.b ? ' · solde ' + fcfa(r.b.solde) : '') + '</div></button>' + pill +
+      '<button type="button" class="absbtn ' + (r.a ? 'on' : '') + '" data-act="abs" data-id="' + esc(r.e.id) + '" aria-pressed="' + r.a + '">Absent</button></div>';
+  }).join('') + '</div>';
+}
+function viewMeals() {
+  var d = V.date, t = todayISO(), info = dayInfo(d);
+  var act = activeStudents(d), abs = act.filter(function (e) { return isAbs(d, e.id); }).length;
+  function chip(v, l) { return '<button type="button" class="chip ' + (ui.mfilter === v ? 'on' : '') + '" data-act="mfilter" data-v="' + v + '">' + l + '</button>'; }
+  return '<div class="col" style="gap:2px"><h1>Repas du jour</h1><div class="muted small">Tout le monde est servi. Marque seulement les absents.</div></div>' +
+    '<div class="datebar"><button type="button" class="roundbtn" data-act="day-prev" aria-label="Jour précédent">' + IC.left + '</button>' +
+    '<div class="col" style="align-items:center"><div style="font-size:17px;font-weight:700">' + esc(fmtDate(d, true)) + '</div>' +
+    '<div class="small" style="color:var(--accent);font-weight:700">' + (info.school ? (act.length - abs) + ' repas · ' + abs + ' absent' + (abs > 1 ? 's' : '') : esc(info.reason)) + '</div></div>' +
+    '<button type="button" class="roundbtn" data-act="day-next" aria-label="Jour suivant">' + IC.right + '</button></div>' +
+    '<div class="row" style="gap:10px"><div class="field grow"><input id="meal-date" type="date" value="' + esc(d) + '" aria-label="Choisir une date"></div>' +
+    (d !== t ? '<button type="button" class="btn small" data-act="day-today">Aujourd’hui</button>' : '') + '</div>' +
+    '<div class="search">' + IC.search + '<input id="mq" type="search" placeholder="Chercher un élève" aria-label="Chercher un élève" value="' + esc(ui.mq) + '"></div>' +
+    '<div class="chips">' + chip('tous', 'Tous') + chip('dette', 'À payer') + chip('abs', 'Absents') + '</div>' +
+    '<div id="mlist">' + mealListHtml() + '</div>';
+}
+
+/* ---------- Année scolaire ---------- */
+function viewYear() {
+  var y = currentYear(), closed = Object.values(S.joursFermes).sort(function (a, b) { return a.debut < b.debut ? -1 : 1; });
+  var info = y && validISO(y.debut) && validISO(y.fin) ? '<div class="card"><div class="small muted">Première livraison</div><div class="name">' + esc(fmtDay(y.debut)) + '</div><div class="small muted" style="margin-top:8px">Dernier jour d’école</div><div class="name">' + esc(fmtDay(y.fin)) + '</div></div>' :
+    '<div class="card warn small">Les dates ne sont pas encore entrées : personne n’est débité.</div>';
+  return '<button type="button" class="back" data-act="nav" data-v="settings">' + IC.left + 'Réglages</button>' +
+    '<div class="col" style="gap:2px"><h1>Année scolaire</h1><div class="muted small">Les repas ne sont débités qu’entre ces deux dates, sans les week-ends ni les jours sans repas.</div></div>' +
+    '<div class="card"><div class="row between"><div style="font:700 22px var(--head)">' + esc(yearLabel(y)) + '</div>' + (y ? '<span class="pill ok">En cours</span>' : '') + '</div></div>' + info +
+    '<button type="button" class="btn primary" data-act="edit-year">' + (y ? 'Modifier les dates' : 'Entrer les dates') + '</button>' +
+    '<div class="row between"><h2>Jours sans repas</h2><button type="button" class="btn small" data-act="add-closed">' + IC.plus + 'Ajouter</button></div>' +
+    '<div class="small muted">Les week-ends sont automatiques. Ajoute les jours fériés et les vacances.</div>' +
+    (closed.length ? '<div class="list">' + closed.map(function (c) {
+      var rng = c.fin && c.fin !== c.debut ? 'Du ' + fmtDate(c.debut) + ' au ' + fmtDate(c.fin) : fmtDate(c.debut, true);
+      return '<div class="item static"><div class="col grow"><div class="name">' + esc(c.motif || 'Jour sans repas') + '</div><div class="small muted">' + esc(rng) + '</div></div><button type="button" class="btn small danger" data-act="del-closed" data-id="' + esc(c.id) + '">Supprimer</button></div>';
+    }).join('') + '</div>' : '<div class="card small muted">Aucun jour sans repas noté.</div>');
+}
+
+/* ---------- Réglages ---------- */
+function viewSettings() {
+  var sl = syncLabel(), lastB = localStorage.getItem(LS_BACKUP);
+  return '<div class="col" style="gap:2px"><h1>Réglages</h1><div class="muted small">Version ' + esc(APP_VERSION) + '</div></div>' +
+    '<div class="card"><div class="row between"><div class="col"><div class="small muted">Prix d’un repas</div><div style="font:700 26px var(--head);color:var(--accent)">' + fcfa(currentPrice()) + '</div></div>' +
+    '<button type="button" class="btn small" data-act="edit-price">Modifier</button></div>' +
+    '<div class="small muted" style="margin-top:8px">Si tu changes le prix, les repas déjà passés gardent l’ancien prix.</div></div>' +
+    '<button type="button" class="card row between" style="width:100%;text-align:left;cursor:pointer" data-act="go-year"><div class="col"><div class="name">Année scolaire</div><div class="small muted">Dates de l’année et jours sans repas</div></div>' + IC.right + '</button>' +
+    '<div class="card col" style="gap:10px"><div class="name">Sauvegarde</div><div class="small muted">' + (lastB ? 'Dernière sauvegarde : ' + esc(fmtDay(lastB)) + '.' : 'Aucune sauvegarde faite pour le moment.') + (FIREBASE_CONFIG ? ' Une copie automatique est faite chaque semaine. Ces boutons servent seulement en cas de besoin.' : ' Fais-en une chaque semaine et envoie le fichier à Léo.') + '</div>' +
+    '<div class="row" style="gap:10px"><button type="button" class="btn primary grow small" data-act="export">Télécharger</button><button type="button" class="btn grow small" data-act="share">Partager</button></div>' +
+    '<button type="button" class="btn small" data-act="import-click">Restaurer depuis un fichier</button>' +
+    '<input id="import-file" type="file" accept="application/json,.json" style="display:none"></div>' +
+    '<div class="card col" style="gap:6px"><div class="name">Synchronisation</div><div class="small"><span class="dot ' + sl.cls + '"></span>' + esc(sl.txt) + '</div>' +
+    (FIREBASE_CONFIG ? '<button type="button" class="btn small" data-act="sync-now">Synchroniser maintenant</button>' : '<div class="small muted">Pour activer Firebase, colle la configuration au début du fichier index.html.</div>') + '</div>';
+}
+
+/* =====================================================================
+   FEUILLES (formulaires)
+   ===================================================================== */
+function openSheet(title, bodyHtml, o) {
+  o = o || {};
+  closeSheet();
+  sheetRoot.innerHTML = '<div class="overlay" data-act="sheet-close"></div><form class="sheet" id="sheet-form" novalidate role="dialog" aria-label="' + esc(title) + '">' +
+    '<div class="sheet-h"><h2>' + esc(title) + '</h2><button type="button" class="x" data-act="sheet-close" aria-label="Fermer">×</button></div>' +
+    '<div class="sheet-b">' + bodyHtml + '</div><div class="err" id="sheet-err" role="alert"></div>' +
+    '<div class="sheet-f"><button type="button" class="btn" data-act="sheet-close">Annuler</button><button type="submit" class="btn ' + (o.danger ? 'danger' : 'primary') + '">' + esc(o.label || 'Enregistrer') + '</button></div></form>';
+  var form = document.getElementById('sheet-form');
+  form.addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var r = o.onSubmit ? o.onSubmit(new FormData(form)) : null;
+    if (typeof r === 'string') { document.getElementById('sheet-err').textContent = r; return; }
+    closeSheet();
+  });
+  if (o.onOpen) o.onOpen();
+  var first = form.querySelector('input:not([type=hidden]),select');
+  if (first && !o.noFocus) setTimeout(function () { try { first.focus(); } catch (e) { /* ignore */ } }, 50);
+}
+function closeSheet() {
+  sheetRoot.innerHTML = '';
+  if (needsRefresh) render();
+}
+function field(id, label, html) { return '<div class="field"><label for="' + id + '">' + label + '</label>' + html + '</div>'; }
+function input(id, type, val, extra) { return '<input id="' + id + '" name="' + id + '" type="' + type + '" value="' + esc(val == null ? '' : val) + '" ' + (extra || '') + '>'; }
+function confirmSheet(title, msg, label, fn) {
+  openSheet(title, '<div>' + esc(msg) + '</div>', { label: label, danger: true, noFocus: true, onSubmit: function () { fn(); return null; } });
+}
+
+function studentForm(e) {
+  var edit = !!e, t = todayISO();
+  var body = field('nom', 'Nom de l’élève', input('nom', 'text', e ? e.nom : '', 'autocomplete="off" placeholder="Prénom et initiale du nom"')) +
+    field('classe', 'Classe', input('classe', 'text', e ? e.classe : '', 'autocomplete="off" placeholder="Ex. 6B, CM2"')) +
+    field('tel', 'Téléphone du parent (WhatsApp)', input('tel', 'tel', e ? e.tel : '', 'autocomplete="off" placeholder="Ex. 6 12 34 56 78"')) +
+    field('note', 'Remarque (allergie, etc.)', input('note', 'text', e ? e.note : '', 'autocomplete="off"')) +
+    field('depuis', 'Repas débités à partir du', input('depuis', 'date', e ? e.depuis : t));
+  if (!edit) {
+    body += '<div class="row" style="gap:10px;align-items:flex-end"><div class="field grow">' + '<label for="solde">Solde de départ (FCFA)</label>' + input('solde', 'text', '', 'inputmode="numeric" placeholder="0"') + '</div>' +
+      '<div class="field" style="width:130px"><label for="sens">Sens</label><select id="sens" name="sens"><option value="+">Crédit</option><option value="-">Dette</option></select></div></div>' +
+      '<div class="small muted">Utile pour les élèves qui ont déjà payé ou qui doivent encore de l’argent.</div>';
+  } else {
+    var retired = isRetired(e);
+    body += '<button type="button" class="btn ' + (retired ? '' : 'danger') + '" data-act="' + (retired ? 'unretire' : 'retire') + '" data-id="' + esc(e.id) + '">' + (retired ? 'Remettre l’élève dans la liste' : 'Retirer l’élève (il reste dans l’historique)') + '</button>';
+  }
+  openSheet(edit ? 'Modifier l’élève' : 'Nouvel élève', body, {
+    onSubmit: function (fd) {
+      var nom = String(fd.get('nom') || '').trim(), depuis = String(fd.get('depuis') || '');
+      if (!nom) return 'Entre le nom de l’élève.';
+      if (!validISO(depuis)) return 'La date de départ n’est pas valide.';
+      var dup = Object.values(S.eleves).some(function (x) { return (!e || x.id !== e.id) && norm(x.nom) === norm(nom) && norm(x.classe) === norm(fd.get('classe')); });
+      if (dup) return 'Un élève avec ce nom et cette classe existe déjà.';
+      var id = e ? e.id : uid();
+      var rec = Object.assign({}, e || {}, { id: id, nom: nom, classe: String(fd.get('classe') || '').trim(), tel: String(fd.get('tel') || '').trim(), note: String(fd.get('note') || '').trim(), depuis: depuis });
+      if (!e) {
+        var s = String(fd.get('solde') || '').trim(), amt = s ? parseAmount(s) : 0;
+        if (s && isNaN(amt)) return 'Le solde de départ doit être un nombre.';
+        commit(['eleves', id], rec);
+        if (amt) { var vid = uid(); commit(['versements', vid], { id: vid, eleve: id, date: depuis, montant: fd.get('sens') === '-' ? -amt : amt, type: 'depart', note: '' }); }
+        toast(nom + ' ajouté(e).');
+      } else { commit(['eleves', id], rec); toast('Modifications enregistrées.'); }
+      render(); return null;
+    }
+  });
+}
+function versementForm(eleveId) {
+  var e = S.eleves[eleveId]; if (!e) return;
+  openSheet('Versement pour ' + e.nom, field('montant', 'Montant reçu (FCFA)', input('montant', 'text', '', 'inputmode="numeric" autocomplete="off" placeholder="Ex. 6000"')) +
+    field('date', 'Date', input('date', 'date', todayISO(), 'max="' + todayISO() + '"')) +
+    field('note', 'Remarque (facultatif)', input('note', 'text', '', 'autocomplete="off" placeholder="Ex. 1 semaine, espèces"')) +
+    '<div class="small muted">Solde actuel : ' + fcfa(balanceOf(e, todayISO()).solde) + '</div>', {
+    onSubmit: function (fd) {
+      var amt = parseAmount(fd.get('montant')), date = String(fd.get('date') || '');
+      if (isNaN(amt) || amt <= 0) return 'Entre un montant supérieur à 0.';
+      if (!validISO(date) || date > todayISO()) return 'La date ne peut pas être dans le futur.';
+      var id = uid();
+      commit(['versements', id], { id: id, eleve: eleveId, date: date, montant: amt, type: 'versement', note: String(fd.get('note') || '').trim() });
+      toast('Versement de ' + fcfa(amt) + ' ajouté à ' + e.nom + '.');
+      V.name = 'student'; V.id = eleveId; render(); return null;
+    }
+  });
+}
+function pickStudentSheet() {
+  var body = '<div class="search">' + IC.search + '<input id="pick-q" type="search" placeholder="Chercher un élève" autocomplete="off"></div><div id="pick-list"></div>';
+  function list() {
+    var q = norm(document.getElementById('pick-q').value);
+    var rows = Object.values(S.eleves).filter(function (e) { return !isRetired(e) && (!q || norm(e.nom + ' ' + (e.classe || '')).indexOf(q) >= 0); })
+      .sort(function (a, b) { return norm(a.nom) < norm(b.nom) ? -1 : 1; }).slice(0, 40);
+    document.getElementById('pick-list').innerHTML = rows.length ? '<div class="list">' + rows.map(function (e) {
+      return '<button type="button" class="item" data-act="pick-eleve" data-id="' + esc(e.id) + '"><div class="avatar">' + esc(initials(e.nom)) + '</div><div class="col grow"><div class="name">' + esc(e.nom) + '</div><div class="small muted">' + esc(e.classe || '') + '</div></div></button>';
+    }).join('') + '</div>' : '<div class="small muted">Aucun élève trouvé.</div>';
+  }
+  openSheet('Pour quel élève ?', body, { label: 'Fermer', onSubmit: function () { return null; }, onOpen: function () {
+    list(); document.getElementById('pick-q').addEventListener('input', list);
+  } });
+}
+function priceForm() {
+  openSheet('Prix d’un repas', field('montant', 'Nouveau prix (FCFA)', input('montant', 'text', currentPrice(), 'inputmode="numeric"')) +
+    field('depuis', 'À partir du', input('depuis', 'date', todayISO())) +
+    '<div class="small muted">Les repas avant cette date gardent l’ancien prix.</div>', {
+    onSubmit: function (fd) {
+      var amt = parseAmount(fd.get('montant')), d = String(fd.get('depuis') || '');
+      if (isNaN(amt) || amt <= 0) return 'Entre un prix supérieur à 0.';
+      if (!validISO(d)) return 'La date n’est pas valide.';
+      var same = Object.values(S.prix).filter(function (p) { return p.depuis === d; })[0];
+      var id = same ? same.id : uid();
+      commit(['prix', id], { id: id, depuis: d, montant: amt });
+      toast('Prix du repas : ' + fcfa(amt) + ' à partir du ' + fmtDay(d) + '.'); render(); return null;
+    }
+  });
+}
+function yearForm() {
+  var y = currentYear(), n = new Date().getFullYear();
+  openSheet('Dates de l’année scolaire', field('debut', 'Première livraison', input('debut', 'date', y ? y.debut : '')) +
+    field('fin', 'Dernier jour d’école', input('fin', 'date', y ? y.fin : '')) +
+    '<div class="small muted">Tu peux modifier ces dates plus tard (par exemple si la rentrée est décalée).</div>', {
+    onSubmit: function (fd) {
+      var a = String(fd.get('debut') || ''), b = String(fd.get('fin') || '');
+      if (!validISO(a) || !validISO(b)) return 'Entre les deux dates.';
+      if (b <= a) return 'Le dernier jour doit être après la première livraison.';
+      if (daysBetween(a, b) > 400) return 'Cette période est trop longue pour une année scolaire.';
+      var id = y ? y.id : uid();
+      commit(['annees', id], { id: id, label: a.slice(0, 4) + '–' + b.slice(0, 4), debut: a, fin: b });
+      toast('Dates enregistrées.'); render(); return null;
+    }
+  });
+}
+function closedForm() {
+  openSheet('Jours sans repas', field('debut', 'Du', input('debut', 'date', '')) +
+    field('fin', 'Au (si plusieurs jours, sinon laisser vide)', input('fin', 'date', '')) +
+    field('motif', 'Motif', input('motif', 'text', '', 'autocomplete="off" placeholder="Ex. Fête nationale, vacances de Noël"')), {
+    onSubmit: function (fd) {
+      var a = String(fd.get('debut') || ''), b = String(fd.get('fin') || '') || a;
+      if (!validISO(a)) return 'Entre la date de début.';
+      if (!validISO(b) || b < a) return 'La date de fin doit être après la date de début.';
+      var id = uid();
+      commit(['joursFermes', id], { id: id, debut: a, fin: b, motif: String(fd.get('motif') || '').trim() });
+      toast('Jour sans repas ajouté.'); render(); return null;
+    }
+  });
+}
+
+/* ---------- Sauvegarde ---------- */
+function backupBlob() {
+  var payload = { app: 'delices-de-christy', version: 1, exportedAt: new Date().toISOString(), data: S };
+  return new Blob([JSON.stringify(payload, null, 1)], { type: 'application/json' });
+}
+function backupName() { return 'christy-sauvegarde-' + todayISO() + '.json'; }
+function markBackup() { try { localStorage.setItem(LS_BACKUP, todayISO()); } catch (e) { /* ignore */ } }
+function doExport() {
+  var url = URL.createObjectURL(backupBlob()), a = document.createElement('a');
+  a.href = url; a.download = backupName(); document.body.appendChild(a); a.click();
+  setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 1500);
+  markBackup(); toast('Sauvegarde téléchargée.'); render();
+}
+function doShare() {
+  var file;
+  try { file = new File([backupBlob()], backupName(), { type: 'application/json' }); } catch (e) { return doExport(); }
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    navigator.share({ files: [file], title: 'Sauvegarde Les délices de Christy' }).then(function () { markBackup(); render(); }).catch(function () { /* annulé */ });
+  } else { doExport(); }
+}
+function doImport(file) {
+  var r = new FileReader();
+  r.onload = function () {
+    var obj;
+    try { obj = JSON.parse(r.result); } catch (e) { return toast('Ce fichier n’est pas une sauvegarde valide.'); }
+    var data = obj && obj.data ? obj.data : obj;
+    if (!data || typeof data !== 'object' || !data.eleves) return toast('Ce fichier n’est pas une sauvegarde valide.');
+    var n = Object.keys(data.eleves).length;
+    confirmSheet('Restaurer la sauvegarde ?', 'Toutes les données actuelles seront remplacées par celles du fichier (' + n + ' élève' + (n > 1 ? 's' : '') + '). Cette action ne peut pas être annulée.', 'Restaurer', function () {
+      S = normalizeState(data); touch();
+      if (FIREBASE_CONFIG) pending = [{ p: '__root', v: S }]; else pending = [];
+      ensureDefaultsSafe(); saveLocal(); sync(); toast('Sauvegarde restaurée.'); render();
+    });
+  };
+  r.readAsText(file);
+}
+
+/* =====================================================================
+   ÉVÉNEMENTS
+   ===================================================================== */
+document.addEventListener('click', function (ev) {
+  var el = ev.target.closest('[data-act]'); if (!el) return;
+  var act = el.getAttribute('data-act'), id = el.getAttribute('data-id'), v = el.getAttribute('data-v');
+  switch (act) {
+    case 'nav': ev.preventDefault(); go(v); break;
+    case 'go-year': go('year'); break;
+    case 'go-meals': go('meals'); break;
+    case 'open-student': go('student', id); ui.histN = 40; break;
+    case 'add-student': studentForm(null); break;
+    case 'edit-student': studentForm(S.eleves[id]); break;
+    case 'add-versement': if (id) versementForm(id); else pickStudentSheet(); break;
+    case 'pick-eleve': closeSheet(); versementForm(id); break;
+    case 'cancel-versement':
+      var vv = S.versements[id]; if (!vv) break;
+      confirmSheet('Annuler ce versement ?', 'Le versement de ' + fcfa(vv.montant) + ' du ' + fmtDay(vv.date) + ' sera marqué comme annulé. Il reste visible dans l’historique mais n’est plus compté.', 'Annuler le versement', function () {
+        commit(['versements', id], Object.assign({}, vv, { annule: true })); toast('Versement annulé.'); render();
+      }); break;
+    case 'retire':
+      var er = S.eleves[id]; if (!er) break;
+      closeSheet();
+      confirmSheet('Retirer ' + er.nom + ' ?', 'Il ne sera plus débité à partir d’aujourd’hui et disparaîtra de la liste du jour. Son historique et son solde restent consultables.', 'Retirer', function () {
+        commit(['eleves', id], Object.assign({}, er, { retireLe: todayISO() })); toast(er.nom + ' retiré(e).'); render();
+      }); break;
+    case 'unretire':
+      var eu = S.eleves[id]; if (!eu) break;
+      var rec = Object.assign({}, eu); delete rec.retireLe;
+      commit(['eleves', id], rec); closeSheet(); toast(eu.nom + ' est de nouveau dans la liste.'); render(); break;
+    case 'filter': ui.filter = v; render(); break;
+    case 'mfilter': ui.mfilter = v; render(); break;
+    case 'more-hist': ui.histN += 60; render(); break;
+    case 'abs':
+      var d = V.date;
+      if (!dayInfo(d).school) break;
+      commit(['absences', d, id], isAbs(d, id) ? null : true); render(); break;
+    case 'day-prev': V.date = addDays(V.date, -1); render(); break;
+    case 'day-next': V.date = addDays(V.date, 1); render(); break;
+    case 'day-today': V.date = todayISO(); render(); break;
+    case 'edit-price': priceForm(); break;
+    case 'edit-year': yearForm(); break;
+    case 'add-closed': closedForm(); break;
+    case 'del-closed':
+      var c = S.joursFermes[id]; if (!c) break;
+      confirmSheet('Supprimer ce jour sans repas ?', (c.motif || 'Jour sans repas') + ' (' + fmtDate(c.debut) + (c.fin && c.fin !== c.debut ? ' → ' + fmtDate(c.fin) : '') + '). Les repas de ces jours seront de nouveau débités.', 'Supprimer', function () {
+        commit(['joursFermes', id], null); toast('Supprimé.'); render();
+      }); break;
+    case 'export': doExport(); break;
+    case 'share': doShare(); break;
+    case 'import-click': var fi = document.getElementById('import-file'); if (fi) fi.click(); break;
+    case 'sync-now': syncState = 'attente'; syncing = false; sync(); toast('Synchronisation lancée.'); break;
+    case 'sheet-close': closeSheet(); break;
+  }
+});
+document.addEventListener('input', function (ev) {
+  var t = ev.target;
+  if (t.id === 'q') { ui.q = t.value; var l = document.getElementById('list'); if (l) l.innerHTML = studentListHtml(); }
+  if (t.id === 'mq') { ui.mq = t.value; var m = document.getElementById('mlist'); if (m) m.innerHTML = mealListHtml(); }
+});
+document.addEventListener('change', function (ev) {
+  var t = ev.target;
+  if (t.id === 'meal-date' && validISO(t.value)) { V.date = t.value; render(); }
+  if (t.id === 'import-file' && t.files && t.files[0]) { doImport(t.files[0]); t.value = ''; }
+});
+document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') { V.date = V.name === 'meals' ? V.date : todayISO(); sync(); } });
+window.addEventListener('online', function () { syncing = false; sync(); });
+window.addEventListener('offline', function () { if (FIREBASE_CONFIG) { syncState = 'horsligne'; refreshIfIdle(); } });
+setInterval(function () { if (document.visibilityState === 'visible') sync(); }, 120000);
+
+/* ---------- Démarrage ---------- */
+loadLocal();
+ensureDefaults();
+try { history.replaceState({ name: 'home', id: null, date: V.date }, ''); } catch (e) { /* ignore */ }
+render();
+sync();
+if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+  navigator.serviceWorker.register('sw.js').catch(function () { /* hors ligne non disponible */ });
+}
+// pour les tests
+window.__christy = { get S() { return S; }, balanceOf: balanceOf, ctx: ctx, todayISO: todayISO, commit: commit, render: render, go: go, dayInfo: dayInfo };
+})();
+</script>
+</body>
+</html>
