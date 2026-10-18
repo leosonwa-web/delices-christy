@@ -122,7 +122,7 @@ var FIREBASE_CONFIG = {
 };
 var FB_APP = 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 var FB_DB = 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
-var APP_VERSION = '2.1.0';
+var APP_VERSION = '2.1.1';
 
 /* ---------- Utilitaires de date (toujours en UTC pour éviter les décalages) ---------- */
 function pad(n) { return (n < 10 ? '0' : '') + n; }
@@ -332,7 +332,12 @@ function ctx() {
   var price = {};
   days.forEach(function (d) { var m = 0; for (var i = 0; i < prix.length; i++) { if (prix[i].depuis <= d) m = prix[i].montant; } price[d] = m; });
   var vers = {};
-  Object.values(S.versements).forEach(function (v) { (vers[v.eleve] = vers[v.eleve] || []).push(v); });
+  var tdy = todayISO();
+  Object.values(S.versements).forEach(function (v) {
+    // Un solde de départ compte dès aujourd'hui, même si l'élève commence plus tard
+    if (v.type === 'depart' && v.date > tdy) { v = Object.assign({}, v, { date: tdy }); }
+    (vers[v.eleve] = vers[v.eleve] || []).push(v);
+  });
   cache = { days: days, price: price, vers: vers, prix: prix };
   return cache;
 }

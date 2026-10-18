@@ -1,6 +1,6 @@
 // Service worker : permet d'ouvrir l'application sans connexion internet.
 // Changer CACHE_VERSION à chaque mise à jour des fichiers.
-const CACHE_VERSION = 'christy-v5';
+const CACHE_VERSION = 'christy-v6';
 const FILES = ['./', './index.html', './manifest.webmanifest', './logo.png', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', (event) => {
