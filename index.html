@@ -74,6 +74,13 @@ h2{margin:0;font:600 19px/1.2 var(--head)}
 .absbtn{min-height:44px;padding:0 12px;border:1px solid #C9D1CC;border-radius:10px;background:#fff;color:#3E4C45;font-size:13px;font-weight:500;cursor:pointer}
 .absbtn.on{border:2px solid #55655D;background:var(--neutral-bg);color:var(--ink);font-weight:700}
 .logo{width:84px;height:65px;object-fit:contain;border-radius:10px;flex-shrink:0}
+.seg{display:flex;background:#E3E7E4;border-radius:12px;padding:3px;gap:2px}
+.seg button{flex:1;min-height:44px;border:0;border-radius:10px;background:none;font-weight:500;font-size:14px;color:#3E4C45;cursor:pointer}
+.seg button.on{background:#fff;color:var(--ink);font-weight:700;box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.bar{height:8px;border-radius:4px;background:var(--accent-t);overflow:hidden;margin-top:6px}
+.bar>i{display:block;height:100%;background:var(--accent)}
+.item.col2{align-items:stretch;padding:10px 0}
+nav button{font-size:10.5px}
 .overlay{position:fixed;inset:0;background:rgba(22,35,29,.45);z-index:20}
 .sheet{position:fixed;left:0;right:0;bottom:0;max-width:560px;margin:0 auto;max-height:92vh;max-height:92dvh;display:flex;flex-direction:column;background:#fff;border-radius:20px 20px 0 0;z-index:21;padding-bottom:env(safe-area-inset-bottom)}
 .sheet-h{display:flex;align-items:center;justify-content:space-between;padding:14px 20px 4px}
@@ -115,7 +122,7 @@ var FIREBASE_CONFIG = {
 };
 var FB_APP = 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 var FB_DB = 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
-var APP_VERSION = '1.0.0 (étape 1)';
+var APP_VERSION = '2.1.0';
 
 /* ---------- Utilitaires de date (toujours en UTC pour éviter les décalages) ---------- */
 function pad(n) { return (n < 10 ? '0' : '') + n; }
@@ -148,6 +155,8 @@ function parseAmount(s) { var t = String(s || '').replace(/[\s  ]/g, '').repl
 
 /* ---------- Icônes ---------- */
 var IC = {
+  receipt: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg>',
+  chart: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 20V11M11 20V4M17 20v-6M2 20h20"/></svg>',
   home: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8M5 10v10h14V10"/></svg>',
   users: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><circle cx="17.5" cy="9" r="2.5"/><path d="M17 14.2c2.6.2 4.5 2.1 4.5 5.3"/></svg>',
   meal: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/></svg>',
@@ -175,7 +184,7 @@ var S = emptyState();
 var pending = [];
 var cache = null;
 
-function emptyState() { return { eleves: {}, versements: {}, absences: {}, annees: {}, joursFermes: {}, prix: {} }; }
+function emptyState() { return { eleves: {}, versements: {}, absences: {}, annees: {}, joursFermes: {}, prix: {}, menus: {}, depenses: {}, categories: {} }; }
 function normalizeState(v) {
   var s = emptyState();
   if (v && typeof v === 'object') { Object.keys(s).forEach(function (k) { if (v[k] && typeof v[k] === 'object') s[k] = v[k]; }); }
@@ -224,8 +233,10 @@ function commit(path, value) {
   sync();
 }
 
+var DEFAULT_CATS = [{ id: 'c_ingredients', nom: 'Ingrédients' }, { id: 'c_emballages', nom: 'Emballages' }, { id: 'c_transport', nom: 'Transport' }];
 function ensureDefaults() {
   if (Object.keys(S.prix).length === 0) commit(['prix', 'p0'], { id: 'p0', depuis: '2000-01-01', montant: 600 });
+  if (Object.keys(S.categories).length === 0) DEFAULT_CATS.forEach(function (c) { commit(['categories', c.id], c); });
 }
 
 /* ---------- Synchronisation Firebase (optionnelle) ---------- */
@@ -276,7 +287,11 @@ function sync() {
     refreshIfIdle();
   });
 }
-function ensureDefaultsSafe() { if (Object.keys(S.prix).length === 0) { S.prix.p0 = { id: 'p0', depuis: '2000-01-01', montant: 600 }; pending.push({ p: 'prix/p0', v: S.prix.p0 }); touch(); saveLocal(); } }
+function ensureDefaultsSafe() {
+  if (Object.keys(S.prix).length === 0) { S.prix.p0 = { id: 'p0', depuis: '2000-01-01', montant: 600 }; pending.push({ p: 'prix/p0', v: S.prix.p0 }); }
+  if (Object.keys(S.categories).length === 0) DEFAULT_CATS.forEach(function (c) { S.categories[c.id] = c; pending.push({ p: 'categories/' + c.id, v: c }); });
+  touch(); saveLocal();
+}
 function syncLabel() {
   var n = pending.length;
   if (syncState === 'local') return { cls: '', txt: 'Mode local : les données restent sur ce téléphone.' };
@@ -385,11 +400,63 @@ function waLink(e, solde) {
   return 'https://wa.me/' + d + '?text=' + encodeURIComponent(msg);
 }
 
+/* ---------- Périodes et bilans ---------- */
+function fmtShort(iso) { return new Date(toUTC(iso)).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', timeZone: 'UTC' }); }
+function monthLabel(iso) { var s = new Date(toUTC(iso)).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric', timeZone: 'UTC' }); return s.charAt(0).toUpperCase() + s.slice(1); }
+function monthStart(iso) { return iso.slice(0, 8) + '01'; }
+function monthEnd(iso) { return fromUTC(Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7), 1) - 86400000); }
+function shiftMonth(ym, n) { var d = ym + '-01'; return (n < 0 ? monthStart(addDays(d, -1)) : addDays(monthEnd(d), 1)).slice(0, 7); }
+function periodRange(kind, ref) {
+  var a, b, label;
+  if (kind === 'week') { a = addDays(ref, -((dow(ref) + 6) % 7)); b = addDays(a, 6); label = 'Semaine du ' + fmtShort(a) + ' au ' + fmtShort(b); }
+  else if (kind === 'month') { a = monthStart(ref); b = monthEnd(ref); label = monthLabel(ref); }
+  else {
+    var y = currentYear();
+    if (y && validISO(y.debut) && validISO(y.fin)) { a = y.debut; b = y.fin; label = 'Année ' + yearLabel(y); }
+    else { a = ref.slice(0, 4) + '-01-01'; b = ref.slice(0, 4) + '-12-31'; label = 'Année ' + ref.slice(0, 4); }
+  }
+  return { a: a, b: b, label: label };
+}
+function periodStats(e, a, b) {
+  var t = todayISO(), end = b < t ? b : t, c = ctx(), repas = 0, abs = 0, debit = 0, i;
+  var from = e.depuis || '0000-00-00', to = e.retireLe;
+  for (i = 0; i < c.days.length; i++) {
+    var d = c.days[i];
+    if (d < a || d < from) continue;
+    if (d > end) break;
+    if (to && d >= to) break;
+    if (isAbs(d, e.id)) { abs++; continue; }
+    debit += c.price[d]; repas++;
+  }
+  var verse = 0;
+  (c.vers[e.id] || []).forEach(function (v) { if (!v.annule && v.type === 'versement' && v.date >= a && v.date <= b) verse += v.montant; });
+  return { repas: repas, abs: abs, debit: debit, verse: verse, solde: balanceOf(e, end).solde };
+}
+function businessStats(a, b) {
+  var tot = { repas: 0, valeur: 0, recu: 0, dep: 0, dette: 0 }, cats = {};
+  Object.values(S.eleves).forEach(function (e) {
+    var s = periodStats(e, a, b);
+    tot.repas += s.repas; tot.valeur += s.debit; tot.recu += s.verse;
+    if (s.solde < 0) tot.dette += -s.solde;
+  });
+  Object.values(S.depenses).forEach(function (x) {
+    if (x.date >= a && x.date <= b) { tot.dep += x.montant; cats[x.cat] = (cats[x.cat] || 0) + x.montant; }
+  });
+  return { tot: tot, cats: cats };
+}
+function schoolList() {
+  var seen = {}, out = [];
+  Object.values(S.eleves).forEach(function (e) { var k = norm(e.ecole); if (k && !seen[k]) { seen[k] = 1; out.push(String(e.ecole).trim()); } });
+  return out.sort(function (a, b) { return norm(a) < norm(b) ? -1 : 1; });
+}
+function subLine(e) { return [e.ecole, e.classe].filter(Boolean).join(' · '); }
+function catName(id) { return (S.categories[id] || {}).nom || 'Autre'; }
+
 /* =====================================================================
    INTERFACE
    ===================================================================== */
 var V = { name: 'home', id: null, date: todayISO() };
-var ui = { q: '', filter: 'tous', mq: '', mfilter: 'tous', histN: 40 };
+var ui = { q: '', filter: 'tous', mq: '', mfilter: 'tous', histN: 40, emonth: '', rkind: 'week', rref: '', rmode: 'global', rq: '', mref: '', school: '' };
 var appEl = document.getElementById('app');
 var sheetRoot = document.getElementById('sheet-root');
 var needsRefresh = false;
@@ -422,8 +489,8 @@ window.addEventListener('popstate', function (ev) {
 });
 
 function navHtml() {
-  var tabs = [['home', 'Accueil', IC.home], ['students', 'Élèves', IC.users], ['meals', 'Repas', IC.meal], ['settings', 'Réglages', IC.cog]];
-  var cur = V.name === 'student' ? 'students' : (V.name === 'year' || V.name === 'admin') ? 'settings' : V.name;
+  var tabs = [['home', 'Accueil', IC.home], ['students', 'Élèves', IC.users], ['meals', 'Repas', IC.meal], ['expenses', 'Dépenses', IC.receipt], ['reports', 'Bilans', IC.chart], ['settings', 'Réglages', IC.cog]];
+  var cur = V.name === 'student' ? 'students' : V.name === 'menus' ? 'meals' : (V.name === 'year' || V.name === 'admin') ? 'settings' : V.name;
   return '<nav aria-label="Menu principal">' + tabs.map(function (t) {
     return '<button type="button" class="' + (cur === t[0] ? 'on' : '') + '" data-act="nav" data-v="' + t[0] + '">' + t[2] + t[1] + '</button>';
   }).join('') + '</nav>';
@@ -436,7 +503,7 @@ function render() {
   var body;
   try {
     body = V.name === 'home' ? viewHome() : V.name === 'students' ? viewStudents() : V.name === 'student' ? viewStudent() :
-      V.name === 'meals' ? viewMeals() : V.name === 'year' ? viewYear() : V.name === 'admin' ? viewAdmin() : viewSettings();
+      V.name === 'meals' ? viewMeals() : V.name === 'year' ? viewYear() : V.name === 'admin' ? viewAdmin() : V.name === 'expenses' ? viewExpenses() : V.name === 'reports' ? viewReports() : V.name === 'menus' ? viewMenus() : viewSettings();
   } catch (err) { body = '<div class="card warn">Une erreur est survenue : ' + esc(err.message) + '</div>'; }
   appEl.innerHTML = '<main>' + body + '</main>' + navHtml();
   var m = document.querySelector('main'); if (m) m.scrollTop = sc;
@@ -448,7 +515,8 @@ function viewHome() {
   var act = activeStudents(t), abs = act.filter(function (e) { return isAbs(t, e.id); }).length;
   var served = info.school ? act.length - abs : 0;
   var vToday = sum(Object.values(S.versements).filter(function (v) { return !v.annule && v.date === t && v.type === 'versement'; }).map(function (v) { return v.montant; }));
-  var debts = Object.values(S.eleves).filter(function (e) { return !isRetired(e); }).map(function (e) { return balanceOf(e, t).solde; }).filter(function (s) { return s < 0; });
+  var debts = Object.values(S.eleves).map(function (e) { return balanceOf(e, t).solde; }).filter(function (s) { return s < 0; });
+  var depToday = sum(Object.values(S.depenses).filter(function (x) { return x.date === t; }).map(function (x) { return x.montant; }));
   var lastV = Object.values(S.versements).filter(function (v) { return !v.annule && v.type === 'versement' && S.eleves[v.eleve]; })
     .sort(function (a, b) { return a.date < b.date ? 1 : a.date > b.date ? -1 : (a.id < b.id ? 1 : -1); }).slice(0, 5);
   var lastB = localStorage.getItem(LS_BACKUP), bTxt = '', bWarn = false;
@@ -477,8 +545,8 @@ function viewHome() {
   html += '<div class="grid2">' +
     '<div class="card stat"><div class="lbl">Repas servis</div><div class="val">' + served + '</div><div class="sub">sur ' + act.length + ' · ' + abs + ' absent' + (abs > 1 ? 's' : '') + '</div></div>' +
     '<div class="card stat"><div class="lbl">Versements du jour</div><div class="val pos">' + num(vToday) + '</div><div class="sub">FCFA reçus aujourd’hui</div></div>' +
-    '<div class="card stat warn"><div class="lbl">Total dû par les parents</div><div class="val">' + num(-sum(debts)) + '</div><div class="sub">FCFA · ' + debts.length + ' élève' + (debts.length > 1 ? 's' : '') + '</div></div>' +
-    '<div class="card stat"><div class="lbl">Prix du repas</div><div class="val">' + num(currentPrice()) + '</div><div class="sub">FCFA</div></div></div>';
+    '<button type="button" class="card stat warn" style="text-align:left;cursor:pointer;font:inherit;width:100%" data-act="go-dette"><div class="lbl">Total dû par les parents</div><div class="val">' + num(-sum(debts)) + '</div><div class="sub">FCFA \u00b7 ' + debts.length + ' élève' + (debts.length > 1 ? 's' : '') + '</div></button>' +
+    '<button type="button" class="card stat" style="text-align:left;cursor:pointer;font:inherit;width:100%" data-act="nav" data-v="expenses"><div class="lbl">Dépenses du jour</div><div class="val">' + num(depToday) + '</div><div class="sub">FCFA</div></button></div>';
 
   html += '<button type="button" class="btn primary" style="min-height:56px;font-size:17px" data-act="go-meals">' + IC.check + 'Noter les absents du jour</button>' +
     '<button type="button" class="btn" data-act="add-versement">' + IC.plus + 'Ajouter un versement</button>';
@@ -497,23 +565,28 @@ function viewHome() {
 }
 
 /* ---------- Liste des élèves ---------- */
-function studentRow(e, t) {
+function studentRow(e, t, withWa) {
   var b = balanceOf(e, t), retired = isRetired(e);
-  var right = retired ? '<span class="pill neutral">Retiré</span>' :
-    '<div class="col" style="align-items:flex-end"><div class="' + (b.solde < 0 ? 'neg' : 'pos') + '">' + fcfa(b.solde) + '</div><div class="tiny ' + (b.solde < 0 ? 'neg' : 'pos') + '">' + (b.solde < 0 ? 'À payer' : 'En règle') + '</div></div>';
-  return '<button type="button" class="item" data-act="open-student" data-id="' + esc(e.id) + '"><div class="avatar">' + esc(initials(e.nom)) + '</div><div class="col grow"><div class="name">' + esc(e.nom) + '</div><div class="small muted">' + esc(e.classe || 'Classe non notée') + (e.note ? ' · ' + esc(e.note) : '') + '</div></div>' + right + '</button>';
+  var bal = '<div class="col" style="align-items:flex-end"><div class="' + (b.solde < 0 ? 'neg' : 'pos') + '">' + fcfa(b.solde) + '</div><div class="tiny ' + (b.solde < 0 ? 'neg' : 'pos') + '">' + (b.solde < 0 ? 'À payer' : 'En règle') + '</div></div>';
+  var right = retired ? (b.solde < 0 ? bal.replace('À payer', 'Retiré · à payer') : '<span class="pill neutral">Retiré</span>') : bal;
+  var main = '<div class="avatar">' + esc(initials(e.nom)) + '</div><div class="col grow"><div class="name">' + esc(e.nom) + '</div><div class="small muted">' + esc(subLine(e) || 'Classe non notée') + (e.note ? ' · ' + esc(e.note) : '') + '</div></div>' + right;
+  var wa = withWa && b.solde < 0 ? waLink(e, b.solde) : '';
+  if (!withWa) return '<button type="button" class="item" data-act="open-student" data-id="' + esc(e.id) + '">' + main + '</button>';
+  return '<div class="item static"><button type="button" class="row grow" style="background:none;border:0;padding:0;text-align:left;cursor:pointer;gap:12px" data-act="open-student" data-id="' + esc(e.id) + '">' + main + '</button>' +
+    (wa ? '<a class="btn small" href="' + esc(wa) + '" target="_blank" rel="noopener">WhatsApp</a>' : '') + '</div>';
 }
 function studentListHtml() {
   var t = todayISO(), q = norm(ui.q), f = ui.filter;
   var rows = Object.values(S.eleves).filter(function (e) {
-    if (q && norm(e.nom + ' ' + (e.classe || '')).indexOf(q) < 0) return false;
-    return f === 'retires' ? isRetired(e) : !isRetired(e);
+    if (q && norm(e.nom + ' ' + (e.classe || '') + ' ' + (e.ecole || '')).indexOf(q) < 0) return false;
+    if (ui.school && norm(e.ecole) !== norm(ui.school)) return false;
+    return f === 'retires' ? isRetired(e) : f === 'dette' ? true : !isRetired(e);
   }).map(function (e) { return { e: e, b: balanceOf(e, t) }; });
   if (f === 'dette') rows = rows.filter(function (r) { return r.b.solde < 0; });
   if (f === 'ok') rows = rows.filter(function (r) { return r.b.solde >= 0; });
   rows.sort(function (a, b) { return f === 'dette' ? a.b.solde - b.b.solde : norm(a.e.nom) < norm(b.e.nom) ? -1 : 1; });
   if (!rows.length) return '<div class="card small muted">' + (Object.keys(S.eleves).length ? 'Aucun élève ne correspond.' : 'Aucun élève pour le moment. Touche « Élève » pour en ajouter un.') + '</div>';
-  return '<div class="list">' + rows.map(function (r) { return studentRow(r.e, t); }).join('') + '</div>';
+  return '<div class="list">' + rows.map(function (r) { return studentRow(r.e, t, f === 'dette'); }).join('') + '</div>';
 }
 function viewStudents() {
   var nAct = Object.values(S.eleves).filter(function (e) { return !isRetired(e); }).length;
@@ -522,6 +595,7 @@ function viewStudents() {
     '<button type="button" class="btn primary small" data-act="add-student">' + IC.plus + 'Élève</button></div>' +
     '<div class="search">' + IC.search + '<input id="q" type="search" placeholder="Chercher un prénom ou une classe" aria-label="Chercher un élève" value="' + esc(ui.q) + '"></div>' +
     '<div class="chips">' + chip('tous', 'Tous') + chip('dette', 'À payer') + chip('ok', 'En règle') + chip('retires', 'Retirés') + '</div>' +
+    (schoolList().length > 1 ? '<div class="chips"><button type="button" class="chip ' + (!ui.school ? 'on' : '') + '" data-act="school" data-v="">Toutes les écoles</button>' + schoolList().map(function (n) { return '<button type="button" class="chip ' + (norm(ui.school) === norm(n) ? 'on' : '') + '" data-act="school" data-v="' + esc(n) + '">' + esc(n) + '</button>'; }).join('') + '</div>' : '') +
     '<div id="list">' + studentListHtml() + '</div>';
 }
 
@@ -533,7 +607,7 @@ function viewStudent() {
   var hist = historyOf(e), shown = hist.slice(0, ui.histN);
   var html = '<button type="button" class="back" data-act="nav" data-v="students">' + IC.left + 'Élèves</button>' +
     '<div class="row"><div class="avatar big">' + esc(initials(e.nom)) + '</div><div class="col grow"><h1 style="font-size:26px">' + esc(e.nom) + '</h1>' +
-    '<div class="muted small">' + esc(e.classe || 'Classe non notée') + (e.tel ? ' · ' + esc(e.tel) : '') + '</div>' + (e.note ? '<div class="small">' + esc(e.note) + '</div>' : '') + '</div>' +
+    '<div class="muted small">' + esc(subLine(e) || 'Classe non notée') + (e.tel ? ' · ' + esc(e.tel) : '') + '</div>' + (e.note ? '<div class="small">' + esc(e.note) + '</div>' : '') + '</div>' +
     '<button type="button" class="btn small" data-act="edit-student" data-id="' + esc(e.id) + '">Modifier</button></div>';
   if (retired) html += '<div class="card"><div style="font-weight:700">Élève retiré depuis le ' + esc(fmtDay(e.retireLe)) + '</div><div class="small muted">Il n’est plus débité et n’apparaît plus dans la liste du jour. L’historique reste.</div></div>';
   html += '<div class="card ' + (b.solde < 0 ? 'warn' : 'accent') + '" style="padding:16px 20px"><div class="small">Solde du compte</div>' +
@@ -571,7 +645,7 @@ function viewStudent() {
 function mealListHtml() {
   var d = V.date, t = todayISO(), info = dayInfo(d), q = norm(ui.mq), f = ui.mfilter;
   if (!info.school) return '<div class="card"><div style="font-weight:700">Pas de repas ce jour-là</div><div class="small muted">' + esc(info.reason) + '</div></div>';
-  var rows = activeStudents(d).filter(function (e) { return !q || norm(e.nom + ' ' + (e.classe || '')).indexOf(q) >= 0; })
+  var rows = activeStudents(d).filter(function (e) { return !q || norm(e.nom + ' ' + (e.classe || '') + ' ' + (e.ecole || '')).indexOf(q) >= 0; })
     .map(function (e) { var a = isAbs(d, e.id), b = d <= t ? balanceOf(e, d) : null; return { e: e, a: a, b: b }; });
   if (f === 'abs') rows = rows.filter(function (r) { return r.a; });
   if (f === 'dette') rows = rows.filter(function (r) { return r.b && !r.a && r.b.solde < 0; });
@@ -585,6 +659,8 @@ function mealListHtml() {
 }
 function viewMeals() {
   var d = V.date, t = todayISO(), info = dayInfo(d);
+  var plat = S.menus[d];
+  var platCard = info.school ? '<div class="card row between"><div class="col grow"><div class="small muted">Plat du jour</div><div class="name">' + (plat ? esc(plat) : '<span class="muted">Pas encore noté</span>') + '</div></div><button type="button" class="btn small" data-act="set-menu" data-d="' + d + '">' + (plat ? 'Changer' : 'Noter') + '</button></div>' : '';
   var act = activeStudents(d), abs = act.filter(function (e) { return isAbs(d, e.id); }).length;
   function chip(v, l) { return '<button type="button" class="chip ' + (ui.mfilter === v ? 'on' : '') + '" data-act="mfilter" data-v="' + v + '">' + l + '</button>'; }
   return '<div class="col" style="gap:2px"><h1>Repas du jour</h1><div class="muted small">Tout le monde est servi. Marque seulement les absents.</div></div>' +
@@ -592,6 +668,7 @@ function viewMeals() {
     '<div class="col" style="align-items:center"><div style="font-size:17px;font-weight:700">' + esc(fmtDate(d, true)) + '</div>' +
     '<div class="small" style="color:var(--accent);font-weight:700">' + (info.school ? (act.length - abs) + ' repas · ' + abs + ' absent' + (abs > 1 ? 's' : '') : esc(info.reason)) + '</div></div>' +
     '<button type="button" class="roundbtn" data-act="day-next" aria-label="Jour suivant">' + IC.right + '</button></div>' +
+    platCard + '<button type="button" class="back" style="min-height:32px;margin-top:-6px" data-act="go-menus">Menus de la semaine' + IC.chev + '</button>' +
     '<div class="row" style="gap:10px"><div class="field grow"><input id="meal-date" type="date" value="' + esc(d) + '" aria-label="Choisir une date"></div>' +
     (d !== t ? '<button type="button" class="btn small" data-act="day-today">Aujourd’hui</button>' : '') + '</div>' +
     '<div class="search">' + IC.search + '<input id="mq" type="search" placeholder="Chercher un élève" aria-label="Chercher un élève" value="' + esc(ui.mq) + '"></div>' +
@@ -608,6 +685,8 @@ function viewYear() {
     '<div class="col" style="gap:2px"><h1>Année scolaire</h1><div class="muted small">Les repas ne sont débités qu’entre ces deux dates, sans les week-ends ni les jours sans repas.</div></div>' +
     '<div class="card"><div class="row between"><div style="font:700 22px var(--head)">' + esc(yearLabel(y)) + '</div>' + (y ? '<span class="pill ok">En cours</span>' : '') + '</div></div>' + info +
     '<button type="button" class="btn primary" data-act="edit-year">' + (y ? 'Modifier les dates' : 'Entrer les dates') + '</button>' +
+    (y && validISO(y.fin) ? '<button type="button" class="btn" data-act="new-year">Nouvelle année scolaire</button>' : '') +
+    (yearsList().length > 1 ? '<div class="small muted">Années enregistrées : ' + esc(yearsList().map(yearLabel).join(' \u00b7 ')) + '</div>' : '') +
     '<div class="row between"><h2>Jours sans repas</h2><button type="button" class="btn small" data-act="add-closed">' + IC.plus + 'Ajouter</button></div>' +
     '<div class="small muted">Les week-ends sont automatiques. Ajoute les jours fériés et les vacances.</div>' +
     (closed.length ? '<div class="list">' + closed.map(function (c) {
@@ -630,13 +709,133 @@ function viewSettings() {
 function viewAdmin() {
   var sl = syncLabel(), lastB = localStorage.getItem(LS_BACKUP);
   return '<button type="button" class="back" data-act="nav" data-v="settings">' + IC.left + 'Réglages</button>' +
-    '<div class="col" style="gap:2px"><h1>Admin</h1><div class="muted small">Réglages pour l\u2019administrateur. Version ' + esc(APP_VERSION) + '</div></div>' +
+    '<div class="col" style="gap:2px"><h1>Admin</h1><div class="muted small">Réglages pour l’administrateur. Version ' + esc(APP_VERSION) + '</div></div>' +
     '<div class="card col" style="gap:10px"><div class="name">Sauvegarde</div><div class="small muted">' + (lastB ? 'Dernière sauvegarde faite depuis ce téléphone : ' + esc(fmtDay(lastB)) + '.' : 'Aucune sauvegarde faite depuis ce téléphone.') + (FIREBASE_CONFIG ? ' Une copie automatique est faite chaque semaine sur GitHub.' : '') + '</div>' +
     '<div class="row" style="gap:10px"><button type="button" class="btn primary grow small" data-act="export">Télécharger</button><button type="button" class="btn grow small" data-act="share">Partager</button></div>' +
     '<button type="button" class="btn small" data-act="import-click">Restaurer depuis un fichier</button>' +
     '<input id="import-file" type="file" accept="application/json,.json" style="display:none"></div>' +
+    '<div class="card col" style="gap:8px"><div class="name">Importer des élèves</div><div class="small muted">Fichier Excel (.xlsx) ou CSV. Colonnes : nom, classe, école, téléphone du parent, solde actuel (négatif si dette). Les élèves déjà présents sont ignorés.</div>' +
+    '<button type="button" class="btn small" data-act="csv-click">Choisir un fichier Excel ou CSV</button>' +
+    '<input id="csv-file" type="file" accept=".xlsx,.xls,.csv,text/csv,text/plain,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" style="display:none"></div>' +
     '<div class="card col" style="gap:8px"><div class="name">Synchronisation</div><div class="small"><span class="dot ' + sl.cls + '"></span>' + esc(sl.txt) + '</div>' +
-    (FIREBASE_CONFIG ? '<button type="button" class="btn small" data-act="sync-now">Synchroniser maintenant</button>' : '<div class="small muted">Pour activer Firebase, colle la configuration au début du fichier index.html.</div>') + '</div>';
+    (FIREBASE_CONFIG ? '<button type="button" class="btn small" data-act="sync-now">Synchroniser maintenant</button>' : '<div class="small muted">Pour activer Firebase, colle la configuration au début du fichier index.html.</div>') + '</div>' +
+    '<div class="card warn col" style="gap:8px"><div style="font-weight:700">Zone dangereuse</div><div class="small">Efface tous les élèves, versements, dépenses, menus et dates. Utile pour passer du test à l’utilisation réelle. Fais d’abord une sauvegarde.</div>' +
+    '<button type="button" class="btn small danger" data-act="wipe">Tout effacer</button></div>';
+}
+
+/* ---------- Menus ---------- */
+function viewMenus() {
+  var ref = ui.mref || todayISO(), mon = addDays(ref, -((dow(ref) + 6) % 7)), t = todayISO(), i;
+  var html = '<button type="button" class="back" data-act="nav" data-v="meals">' + IC.left + 'Repas</button>' +
+    '<div class="col" style="gap:2px"><h1>Menus</h1><div class="muted small">Plat de chaque jour. Le prix est dans Réglages.</div></div>' +
+    '<div class="datebar"><button type="button" class="roundbtn" data-act="mref" data-v="-1" aria-label="Semaine précédente">' + IC.left + '</button>' +
+    '<div style="font-size:16px;font-weight:700;text-align:center">Semaine du ' + esc(fmtShort(mon)) + ' au ' + esc(fmtShort(addDays(mon, 4))) + '</div>' +
+    '<button type="button" class="roundbtn" data-act="mref" data-v="1" aria-label="Semaine suivante">' + IC.right + '</button></div><div class="list">';
+  for (i = 0; i < 5; i++) {
+    var d = addDays(mon, i), info = dayInfo(d), plat = S.menus[d];
+    html += '<div class="item static"><div class="col grow"><div class="small" style="font-weight:700;color:var(--accent)">' + esc(fmtDate(d, true)) + (d === t ? ' · aujourd’hui' : '') + '</div>' +
+      '<div class="name">' + (plat ? esc(plat) : '<span class="muted">' + (info.code === 'closed' ? esc(info.reason) : 'Pas encore noté') + '</span>') + '</div></div>' +
+      '<button type="button" class="btn small" data-act="set-menu" data-d="' + d + '">' + (plat ? 'Changer' : 'Noter') + '</button></div>';
+  }
+  html += '</div><h2>Historique des repas</h2>';
+  var c = ctx(), past = c.days.filter(function (x) { return x <= t; }).reverse().slice(0, 20);
+  if (!past.length) return html + '<div class="card small muted">Aucun repas servi pour le moment.</div>';
+  return html + '<div class="list">' + past.map(function (d) {
+    var act = activeStudents(d), n = act.length - act.filter(function (e) { return isAbs(d, e.id); }).length;
+    return '<div class="item static" style="min-height:56px"><div class="col grow"><div class="name">' + (S.menus[d] ? esc(S.menus[d]) : '<span class="muted">Plat non noté</span>') + '</div><div class="tiny muted">' + esc(fmtDate(d, true)) + '</div></div><div style="font-weight:700">' + n + ' repas</div></div>';
+  }).join('') + '</div>';
+}
+
+/* ---------- Dépenses ---------- */
+function viewExpenses() {
+  var m = ui.emonth || todayISO().slice(0, 7), a = m + '-01', b = monthEnd(a), t = todayISO();
+  var items = Object.values(S.depenses).filter(function (x) { return x.date >= a && x.date <= b; })
+    .sort(function (p, q) { return p.date < q.date ? 1 : p.date > q.date ? -1 : (p.id < q.id ? 1 : -1); });
+  var total = sum(items.map(function (x) { return x.montant; })), cats = {};
+  items.forEach(function (x) { cats[x.cat] = (cats[x.cat] || 0) + x.montant; });
+  var keys = Object.keys(cats).sort(function (p, q) { return cats[q] - cats[p]; });
+  var html = '<div class="row between"><div class="col"><h1>Dépenses</h1><div class="muted small">Ingrédients, emballages, transport…</div></div></div>' +
+    '<button type="button" class="btn primary" style="min-height:56px;font-size:17px" data-act="add-expense">' + IC.plus + 'Ajouter une dépense</button>' +
+    '<div class="datebar"><button type="button" class="roundbtn" data-act="emonth" data-v="-1" aria-label="Mois précédent">' + IC.left + '</button>' +
+    '<div style="font-size:17px;font-weight:700">' + esc(monthLabel(a)) + '</div>' +
+    '<button type="button" class="roundbtn" data-act="emonth" data-v="1" aria-label="Mois suivant">' + IC.right + '</button></div>' +
+    '<div class="card stat"><div class="lbl">Total du mois</div><div class="val">' + num(total) + ' <span style="font-size:15px;font-weight:500">FCFA</span></div><div class="sub">' + items.length + ' dépense' + (items.length > 1 ? 's' : '') + '</div></div>';
+  if (keys.length) {
+    html += '<div class="card col" style="gap:10px">' + keys.map(function (k) {
+      return '<div><div class="row between"><div class="small">' + esc(catName(k)) + '</div><div class="small" style="font-weight:700">' + num(cats[k]) + ' FCFA</div></div><div class="bar"><i style="width:' + Math.max(3, Math.round(cats[k] * 100 / total)) + '%"></i></div></div>';
+    }).join('') + '</div>';
+  }
+  html += '<h2>Liste</h2>';
+  if (!items.length) return html + '<div class="card small muted">Aucune dépense notée ce mois-ci.</div>';
+  return html + '<div class="list">' + items.map(function (x) {
+    return '<button type="button" class="item" data-act="edit-expense" data-id="' + esc(x.id) + '"><div class="col grow"><div class="name">' + esc(catName(x.cat)) + '</div><div class="small muted">' + esc(fmtDate(x.date)) + (x.date === t ? ' · aujourd’hui' : '') + (x.note ? ' · ' + esc(x.note) : '') + '</div></div><div style="font-weight:700">' + num(x.montant) + ' FCFA</div></button>';
+  }).join('') + '</div>';
+}
+
+/* ---------- Bilans ---------- */
+function reportStudentsHtml() {
+  var P = periodRange(ui.rkind, ui.rref || todayISO()), q = norm(ui.rq);
+  var rows = Object.values(S.eleves).filter(function (e) { return !q || norm(e.nom + ' ' + (e.classe || '') + ' ' + (e.ecole || '')).indexOf(q) >= 0; })
+    .map(function (e) { return { e: e, s: periodStats(e, P.a, P.b) }; })
+    .filter(function (r) { return !isRetired(r.e) || r.s.repas || r.s.abs || r.s.verse || r.s.solde < 0; });
+  rows.sort(function (x, y) { return x.s.solde - y.s.solde; });
+  if (!rows.length) return '<div class="card small muted">Aucun élève.</div>';
+  var tot = rows.reduce(function (a, r) { a.repas += r.s.repas; a.debit += r.s.debit; a.verse += r.s.verse; return a; }, { repas: 0, debit: 0, verse: 0 });
+  return '<div class="card small"><div class="row between"><span>Repas servis</span><b>' + tot.repas + '</b></div><div class="row between"><span>Valeur des repas</span><b>' + fcfa(tot.debit) + '</b></div><div class="row between"><span>Versements reçus</span><b>' + fcfa(tot.verse) + '</b></div></div>' +
+    '<div class="list">' + rows.map(function (r) {
+      return '<button type="button" class="item" style="min-height:68px" data-act="open-student" data-id="' + esc(r.e.id) + '"><div class="col grow"><div class="name">' + esc(r.e.nom) + '</div><div class="tiny muted">' + esc(r.e.classe || '') + ' · ' + r.s.repas + ' repas' + (r.s.abs ? ' · ' + r.s.abs + ' abs.' : '') + '</div></div>' +
+        '<div class="col" style="align-items:flex-end"><div class="' + (r.s.solde < 0 ? 'neg' : 'pos') + '">' + fcfa(r.s.solde) + '</div><div class="tiny muted">repas ' + num(r.s.debit) + ' · versé ' + num(r.s.verse) + '</div></div></button>';
+    }).join('') + '</div>';
+}
+function reportSchoolsHtml(P) {
+  var g = {}, order = [];
+  Object.values(S.eleves).forEach(function (e) {
+    var s = periodStats(e, P.a, P.b);
+    if (isRetired(e) && !s.repas && !s.abs && !s.verse && s.solde >= 0) return;
+    var k = norm(e.ecole), name = String(e.ecole || '').trim() || 'Sans école';
+    if (!g[k]) { g[k] = { name: name, n: 0, repas: 0, debit: 0, verse: 0, dette: 0 }; order.push(k); }
+    var x = g[k]; x.n++; x.repas += s.repas; x.debit += s.debit; x.verse += s.verse; if (s.solde < 0) x.dette += -s.solde;
+  });
+  if (!order.length) return '<div class="card small muted">Aucun élève.</div>';
+  order.sort(function (a, b) { return g[b].debit - g[a].debit; });
+  var max = Math.max.apply(null, order.map(function (k) { return g[k].debit; })) || 1;
+  var hint = order.length === 1 && order[0] === '' ? '<div class="card small">Aucune école n’est encore notée. Ajoute l’école dans la fiche de chaque élève (bouton Modifier).</div>' : '';
+  return hint + order.map(function (k) {
+    var x = g[k];
+    return '<div class="card col" style="gap:8px"><div class="row between"><div class="name">' + esc(x.name) + '</div><div class="small muted">' + x.n + ' élève' + (x.n > 1 ? 's' : '') + '</div></div>' +
+      '<div class="small row between"><span>Repas servis</span><b>' + x.repas + '</b></div>' +
+      '<div class="small row between"><span>Valeur des repas</span><b>' + fcfa(x.debit) + '</b></div>' +
+      '<div class="small row between"><span>Versements reçus</span><b class="pos">' + fcfa(x.verse) + '</b></div>' +
+      '<div class="small row between"><span>Encore dû</span><b class="' + (x.dette ? 'neg' : '') + '">' + fcfa(x.dette) + '</b></div>' +
+      '<div class="bar"><i style="width:' + Math.max(3, Math.round(x.debit * 100 / max)) + '%"></i></div></div>';
+  }).join('') + '<div class="small muted">Les dépenses ne sont pas réparties par école.</div>';
+}
+function viewReports() {
+  var kind = ui.rkind, ref = ui.rref || todayISO(), P = periodRange(kind, ref);
+  function seg(key, cur, opts) { return '<div class="seg">' + opts.map(function (o) { return '<button type="button" class="' + (cur === o[0] ? 'on' : '') + '" data-act="' + key + '" data-v="' + o[0] + '">' + o[1] + '</button>'; }).join('') + '</div>'; }
+  var html = '<div class="col" style="gap:2px"><h1>Bilans</h1><div class="muted small">Argent reçu, dépenses et comptes des élèves.</div></div>' +
+    seg('rkind', kind, [['week', 'Semaine'], ['month', 'Mois'], ['year', 'Année']]) +
+    (kind === 'year' ? '<div style="text-align:center;font-size:17px;font-weight:700">' + esc(P.label) + '</div>' :
+      '<div class="datebar"><button type="button" class="roundbtn" data-act="rprev" aria-label="Période précédente">' + IC.left + '</button><div style="font-size:16px;font-weight:700;text-align:center">' + esc(P.label) + '</div><button type="button" class="roundbtn" data-act="rnext" aria-label="Période suivante">' + IC.right + '</button></div>') +
+    seg('rmode', ui.rmode, [['global', 'Global'], ['ecoles', 'Par école'], ['eleves', 'Par élève']]);
+  if (ui.rmode === 'ecoles') return html + reportSchoolsHtml(P);
+  if (ui.rmode === 'eleves') {
+    return html + '<div class="search">' + IC.search + '<input id="rq" type="search" placeholder="Chercher un élève" aria-label="Chercher un élève" value="' + esc(ui.rq) + '"></div><div id="rlist" class="col" style="gap:12px">' + reportStudentsHtml() + '</div>';
+  }
+  var B = businessStats(P.a, P.b), T = B.tot, reste = T.recu - T.dep, marge = T.valeur - T.dep;
+  var keys = Object.keys(B.cats).sort(function (p, q) { return B.cats[q] - B.cats[p]; });
+  html += '<div class="grid2"><div class="card stat"><div class="lbl">Argent reçu</div><div class="val pos">' + num(T.recu) + '</div><div class="sub">FCFA versés</div></div>' +
+    '<div class="card stat"><div class="lbl">Dépenses</div><div class="val">' + num(T.dep) + '</div><div class="sub">FCFA</div></div></div>' +
+    '<div class="card ' + (reste < 0 ? 'warn' : 'accent') + '" style="padding:16px 20px"><div class="small">Reste (argent reçu − dépenses)</div><div style="font:700 34px/1.15 var(--head)">' + fcfa(reste) + '</div></div>' +
+    '<div class="grid2"><div class="card stat"><div class="lbl">Repas servis</div><div class="val">' + T.repas + '</div><div class="sub">valeur ' + num(T.valeur) + ' FCFA</div></div>' +
+    '<div class="card stat' + (marge < 0 ? ' warn' : '') + '"><div class="lbl">Marge sur les repas</div><div class="val">' + fcfa(marge) + '</div><div class="sub">repas servis − dépenses</div></div></div>' +
+    '<div class="card stat warn"><div class="lbl">Encore dû par les parents</div><div class="val">' + num(T.dette) + ' <span style="font-size:15px;font-weight:500">FCFA</span></div><div class="sub">somme des comptes négatifs à la fin de la période</div></div>';
+  if (keys.length) {
+    html += '<h2>Dépenses par catégorie</h2><div class="card col" style="gap:10px">' + keys.map(function (k) {
+      return '<div><div class="row between"><div class="small">' + esc(catName(k)) + '</div><div class="small" style="font-weight:700">' + num(B.cats[k]) + ' FCFA</div></div><div class="bar"><i style="width:' + Math.max(3, Math.round(B.cats[k] * 100 / T.dep)) + '%"></i></div></div>';
+    }).join('') + '</div>';
+  }
+  return html + '<div class="small muted">Le « reste » compte seulement l’argent réellement reçu. La « marge » compte tous les repas servis, même ceux pas encore payés.</div>';
 }
 
 /* =====================================================================
@@ -673,6 +872,7 @@ function confirmSheet(title, msg, label, fn) {
 function studentForm(e) {
   var edit = !!e, t = todayISO();
   var body = field('nom', 'Nom de l’élève', input('nom', 'text', e ? e.nom : '', 'autocomplete="off" placeholder="Prénom et initiale du nom"')) +
+    field('ecole', 'École', input('ecole', 'text', e ? e.ecole : '', 'autocomplete="off" list="ecoles" placeholder="Ex. École Les Palmiers"') + '<datalist id="ecoles">' + schoolList().map(function (n) { return '<option value="' + esc(n) + '"></option>'; }).join('') + '</datalist>') +
     field('classe', 'Classe', input('classe', 'text', e ? e.classe : '', 'autocomplete="off" placeholder="Ex. 6B, CM2"')) +
     field('tel', 'Téléphone du parent (WhatsApp)', input('tel', 'tel', e ? e.tel : '', 'autocomplete="off" placeholder="Ex. 6 12 34 56 78"')) +
     field('note', 'Remarque (allergie, etc.)', input('note', 'text', e ? e.note : '', 'autocomplete="off"')) +
@@ -690,10 +890,10 @@ function studentForm(e) {
       var nom = String(fd.get('nom') || '').trim(), depuis = String(fd.get('depuis') || '');
       if (!nom) return 'Entre le nom de l’élève.';
       if (!validISO(depuis)) return 'La date de départ n’est pas valide.';
-      var dup = Object.values(S.eleves).some(function (x) { return (!e || x.id !== e.id) && norm(x.nom) === norm(nom) && norm(x.classe) === norm(fd.get('classe')); });
+      var dup = Object.values(S.eleves).some(function (x) { return (!e || x.id !== e.id) && norm(x.nom) === norm(nom) && norm(x.classe) === norm(fd.get('classe')) && norm(x.ecole) === norm(fd.get('ecole')); });
       if (dup) return 'Un élève avec ce nom et cette classe existe déjà.';
       var id = e ? e.id : uid();
-      var rec = Object.assign({}, e || {}, { id: id, nom: nom, classe: String(fd.get('classe') || '').trim(), tel: String(fd.get('tel') || '').trim(), note: String(fd.get('note') || '').trim(), depuis: depuis });
+      var rec = Object.assign({}, e || {}, { id: id, nom: nom, ecole: String(fd.get('ecole') || '').trim(), classe: String(fd.get('classe') || '').trim(), tel: String(fd.get('tel') || '').trim(), note: String(fd.get('note') || '').trim(), depuis: depuis });
       if (!e) {
         var s = String(fd.get('solde') || '').trim(), amt = s ? parseAmount(s) : 0;
         if (s && isNaN(amt)) return 'Le solde de départ doit être un nombre.';
@@ -726,7 +926,7 @@ function pickStudentSheet() {
   var body = '<div class="search">' + IC.search + '<input id="pick-q" type="search" placeholder="Chercher un élève" autocomplete="off"></div><div id="pick-list"></div>';
   function list() {
     var q = norm(document.getElementById('pick-q').value);
-    var rows = Object.values(S.eleves).filter(function (e) { return !isRetired(e) && (!q || norm(e.nom + ' ' + (e.classe || '')).indexOf(q) >= 0); })
+    var rows = Object.values(S.eleves).filter(function (e) { return !isRetired(e) && (!q || norm(e.nom + ' ' + (e.classe || '') + ' ' + (e.ecole || '')).indexOf(q) >= 0); })
       .sort(function (a, b) { return norm(a.nom) < norm(b.nom) ? -1 : 1; }).slice(0, 40);
     document.getElementById('pick-list').innerHTML = rows.length ? '<div class="list">' + rows.map(function (e) {
       return '<button type="button" class="item" data-act="pick-eleve" data-id="' + esc(e.id) + '"><div class="avatar">' + esc(initials(e.nom)) + '</div><div class="col grow"><div class="name">' + esc(e.nom) + '</div><div class="small muted">' + esc(e.classe || '') + '</div></div></button>';
@@ -778,6 +978,162 @@ function closedForm() {
       var id = uid();
       commit(['joursFermes', id], { id: id, debut: a, fin: b, motif: String(fd.get('motif') || '').trim() });
       toast('Jour sans repas ajouté.'); render(); return null;
+    }
+  });
+}
+
+function menuForm(d) {
+  var plats = {}, list = [];
+  Object.keys(S.menus).sort().reverse().forEach(function (k) { var v = S.menus[k]; if (v && !plats[v]) { plats[v] = 1; list.push(v); } });
+  openSheet('Plat du ' + fmtDate(d, true), field('plat', 'Plat', input('plat', 'text', S.menus[d] || '', 'autocomplete="off" list="plats" placeholder="Ex. Riz sauté aux légumes"') +
+    '<datalist id="plats">' + list.slice(0, 40).map(function (v) { return '<option value="' + esc(v) + '"></option>'; }).join('') + '</datalist>') +
+    '<div class="small muted">Laisse vide pour effacer le plat de ce jour.</div>', {
+    onSubmit: function (fd) {
+      var v = String(fd.get('plat') || '').trim();
+      commit(['menus', d], v || null); toast(v ? 'Plat enregistré.' : 'Plat effacé.'); render(); return null;
+    }
+  });
+}
+function expenseForm(x) {
+  var cats = Object.values(S.categories).sort(function (a, b) { return norm(a.nom) < norm(b.nom) ? -1 : 1; });
+  var cur = x ? x.cat : (ui.lastCat && S.categories[ui.lastCat] ? ui.lastCat : S.categories.c_ingredients ? 'c_ingredients' : (cats[0] || {}).id);
+  var body = field('montant', 'Montant (FCFA)', input('montant', 'text', x ? x.montant : '', 'inputmode="numeric" autocomplete="off" placeholder="Ex. 25000"')) +
+    field('cat', 'Catégorie', '<select id="cat" name="cat">' + cats.map(function (c) { return '<option value="' + esc(c.id) + '"' + (c.id === cur ? ' selected' : '') + '>' + esc(c.nom) + '</option>'; }).join('') + '</select>') +
+    field('newcat', 'Ou ajouter une nouvelle catégorie', input('newcat', 'text', '', 'autocomplete="off" placeholder="Ex. Gaz, Main-d’œuvre"')) +
+    field('date', 'Date', input('date', 'date', x ? x.date : todayISO())) +
+    field('note', 'Remarque (facultatif)', input('note', 'text', x ? x.note : '', 'autocomplete="off" placeholder="Ex. marché, poulet"')) +
+    (x ? '<button type="button" class="btn danger" data-act="del-expense" data-id="' + esc(x.id) + '">Supprimer cette dépense</button>' : '');
+  openSheet(x ? 'Modifier la dépense' : 'Nouvelle dépense', body, {
+    onSubmit: function (fd) {
+      var amt = parseAmount(fd.get('montant')), date = String(fd.get('date') || ''), nc = String(fd.get('newcat') || '').trim(), cat = String(fd.get('cat') || '');
+      if (isNaN(amt) || amt <= 0) return 'Entre un montant supérieur à 0.';
+      if (!validISO(date)) return 'La date n’est pas valide.';
+      if (nc) {
+        var ex = Object.values(S.categories).filter(function (c) { return norm(c.nom) === norm(nc); })[0];
+        if (ex) cat = ex.id; else { cat = uid(); commit(['categories', cat], { id: cat, nom: nc }); }
+      }
+      if (!cat || !S.categories[cat]) return 'Choisis une catégorie.';
+      ui.lastCat = cat;
+      var id = x ? x.id : uid();
+      commit(['depenses', id], { id: id, date: date, montant: amt, cat: cat, note: String(fd.get('note') || '').trim() });
+      toast('Dépense de ' + fcfa(amt) + ' enregistrée.'); render(); return null;
+    }
+  });
+}
+function newYearForm() {
+  var y = currentYear(); if (!y) return;
+  var studs = Object.values(S.eleves).filter(function (e) { return !isRetired(e); }).sort(function (a, b) { return norm(a.nom) < norm(b.nom) ? -1 : 1; }), t = todayISO();
+  var body = '<div class="small muted">Les comptes (soldes) de chaque élève sont repris automatiquement. Décoche les élèves qui ne reviennent pas : ils restent dans l’historique.</div>' +
+    field('debut', 'Première livraison de la nouvelle année', input('debut', 'date', '')) +
+    field('fin', 'Dernier jour d’école', input('fin', 'date', '')) +
+    '<div class="name">Élèves qui continuent (' + studs.length + ')</div><div class="list">' + studs.map(function (e) {
+      var s = balanceOf(e, t).solde;
+      return '<label class="item" style="gap:12px"><input type="checkbox" name="keep" value="' + esc(e.id) + '" checked style="width:24px;height:24px;flex-shrink:0"><div class="col grow"><div class="name">' + esc(e.nom) + '</div><div class="tiny muted">' + esc(e.classe || '') + '</div></div><div class="small ' + (s < 0 ? 'neg' : 'pos') + '">' + fcfa(s) + '</div></label>';
+    }).join('') + '</div>';
+  openSheet('Nouvelle année scolaire', body, {
+    label: 'Créer la nouvelle année', noFocus: true,
+    onSubmit: function (fd) {
+      var a = String(fd.get('debut') || ''), b = String(fd.get('fin') || ''), keep = fd.getAll('keep');
+      if (!validISO(a) || !validISO(b)) return 'Entre les deux dates.';
+      if (a <= y.fin) return 'La première livraison doit être après le dernier jour de l’année en cours (' + fmtDay(y.fin) + ').';
+      if (b <= a || daysBetween(a, b) > 400) return 'Le dernier jour d’école n’est pas valide.';
+      var id = uid();
+      commit(['annees', id], { id: id, label: a.slice(0, 4) + '–' + b.slice(0, 4), debut: a, fin: b });
+      var out = 0;
+      studs.forEach(function (e) { if (keep.indexOf(e.id) < 0) { commit(['eleves', e.id], Object.assign({}, e, { retireLe: addDays(y.fin, 1) })); out++; } });
+      toast('Nouvelle année créée' + (out ? ' · ' + out + ' élève' + (out > 1 ? 's' : '') + ' retiré' + (out > 1 ? 's' : '') : '') + '.'); render(); return null;
+    }
+  });
+}
+function splitLine(line, delim) {
+  var out = [], cur = '', q = false, i;
+  for (i = 0; i < line.length; i++) {
+    var ch = line.charAt(i);
+    if (ch === '"') { if (q && line.charAt(i + 1) === '"') { cur += '"'; i++; } else q = !q; }
+    else if (ch === delim && !q) { out.push(cur); cur = ''; }
+    else cur += ch;
+  }
+  out.push(cur);
+  return out.map(function (x) { return x.trim(); });
+}
+function rowsToStudents(rows) {
+  rows = rows.filter(function (r) { return r.some(function (c) { return String(c == null ? '' : c).trim(); }); })
+    .map(function (r) { return r.map(function (c) { return c == null ? '' : String(c).trim(); }); });
+  if (!rows.length) return [];
+  var idx = { nom: 0, classe: 1, ecole: 2, tel: 3, solde: 4 }, head = rows[0].map(norm), isHead = false;
+  var map = { nom: /^(nom|prenom|eleve|name)/, classe: /^(classe|class|niveau)/, ecole: /^(ecole|etablissement|school)/, tel: /^(tel|phone|numero|parent|whatsapp|contact)/, solde: /^(solde|balance|compte)/ };
+  var found = {};
+  head.forEach(function (h, c) { Object.keys(map).forEach(function (k) { if (found[k] == null && map[k].test(h)) { found[k] = c; } }); });
+  if (found.nom != null || Object.keys(found).length >= 2) { isHead = true; Object.keys(idx).forEach(function (k) { idx[k] = found[k] != null ? found[k] : -1; }); if (idx.nom < 0) idx.nom = 0; rows.shift(); }
+  function get(r, k) { return idx[k] >= 0 ? (r[idx[k]] || '') : ''; }
+  return rows.map(function (r) {
+    var raw = get(r, 'solde').replace(/[\s  ]/g, '').replace('−', '-').replace(',', '.'), m = raw.match(/^-?\d+/);
+    return { nom: get(r, 'nom'), classe: get(r, 'classe'), ecole: get(r, 'ecole'), tel: get(r, 'tel'), solde: m ? parseInt(m[0], 10) : 0 };
+  }).filter(function (r) { return r.nom; });
+}
+function csvToRows(text) {
+  var lines = text.replace(/^﻿/, '').split(/\r?\n/).filter(function (l) { return l.trim(); });
+  if (!lines.length) return [];
+  var delim = ';', best = -1;
+  [';', ',', '\t'].forEach(function (d) { var n = lines[0].split(d).length; if (n > best) { best = n; delim = d; } });
+  return lines.map(function (l) { return splitLine(l, delim); });
+}
+function loadXlsxLib() {
+  if (window.XLSX) return Promise.resolve();
+  return new Promise(function (res, rej) {
+    var sc = document.createElement('script');
+    sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    sc.onload = res; sc.onerror = function () { rej(new Error('lib')); };
+    document.head.appendChild(sc);
+  });
+}
+function doImportCsv(file) {
+  var isXlsx = /\.xlsx?$/i.test(file.name || '');
+  var rd = new FileReader();
+  rd.onload = function () {
+    if (!isXlsx) return showImport(rowsToStudents(csvToRows(String(rd.result || ''))));
+    loadXlsxLib().then(function () {
+      var wb = window.XLSX.read(rd.result, { type: 'array' });
+      var ws = wb.Sheets[wb.SheetNames[0]];
+      showImport(rowsToStudents(window.XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: '' })));
+    }).catch(function () { toast('Lecture du fichier Excel impossible (connexion internet nécessaire). Enregistre-le en CSV UTF-8 et réessaie.'); });
+  };
+  if (isXlsx) rd.readAsArrayBuffer(file); else rd.readAsText(file);
+}
+function showImport(rows) {
+  if (!rows.length) return toast('Aucun élève trouvé dans ce fichier.');
+  var have = {}; Object.values(S.eleves).forEach(function (e) { have[norm(e.nom) + '|' + norm(e.classe) + '|' + norm(e.ecole)] = 1; });
+  var fresh = [], seen = {};
+  rows.forEach(function (r) { var k = norm(r.nom) + '|' + norm(r.classe) + '|' + norm(r.ecole); if (!have[k] && !seen[k]) { seen[k] = 1; fresh.push(r); } });
+  if (!fresh.length) return toast('Tous les élèves de ce fichier existent déjà.');
+  var y = currentYear(), dflt = y && validISO(y.debut) ? y.debut : todayISO();
+  var body = '<div><b>' + fresh.length + '</b> élève' + (fresh.length > 1 ? 's' : '') + ' à importer' + (rows.length - fresh.length ? ' (' + (rows.length - fresh.length) + ' déjà présent ou en double, ignoré' + (rows.length - fresh.length > 1 ? 's' : '') + ')' : '') + '.</div>' +
+    '<div class="small muted">Exemples : ' + fresh.slice(0, 3).map(function (r) { return esc(r.nom + ' (' + [r.ecole, r.classe].filter(Boolean).join(', ') + ')' + (r.solde ? ' ' + fcfa(r.solde) : '')); }).join(' · ') + '</div>' +
+    field('depuis', 'Repas débités à partir du', input('depuis', 'date', dflt)) +
+    '<div class="small muted">Le solde de chaque ligne est enregistré à cette date comme solde de départ.</div>';
+  openSheet('Importer des élèves', body, {
+    label: 'Importer', noFocus: true,
+    onSubmit: function (fd) {
+      var dep = String(fd.get('depuis') || '');
+      if (!validISO(dep)) return 'La date n’est pas valide.';
+      fresh.forEach(function (r) {
+        var id = uid();
+        commit(['eleves', id], { id: id, nom: r.nom, ecole: r.ecole, classe: r.classe, tel: r.tel, note: '', depuis: dep });
+        if (r.solde) { var vid = uid(); commit(['versements', vid], { id: vid, eleve: id, date: dep, montant: r.solde, type: 'depart', note: '' }); }
+      });
+      toast(fresh.length + ' élève' + (fresh.length > 1 ? 's' : '') + ' importé' + (fresh.length > 1 ? 's' : '') + '.'); render(); return null;
+    }
+  });
+}
+function wipeForm() {
+  openSheet('Tout effacer ?', '<div>Tous les élèves, versements, dépenses, menus, absences et dates seront supprimés, ici et dans Firebase. Cette action ne peut pas être annulée.</div>' +
+    field('conf', 'Pour confirmer, écris EFFACER', input('conf', 'text', '', 'autocomplete="off" autocapitalize="characters"')), {
+    label: 'Tout effacer', danger: true,
+    onSubmit: function (fd) {
+      if (String(fd.get('conf') || '').trim().toUpperCase() !== 'EFFACER') return 'Écris EFFACER pour confirmer.';
+      S = emptyState(); touch();
+      pending = FIREBASE_CONFIG ? [{ p: '__root', v: S }] : [];
+      ensureDefaultsSafe(); saveLocal(); sync(); V.name = 'home'; toast('Toutes les données ont été effacées.'); render(); return null;
     }
   });
 }
@@ -852,6 +1208,7 @@ document.addEventListener('click', function (ev) {
       var rec = Object.assign({}, eu); delete rec.retireLe;
       commit(['eleves', id], rec); closeSheet(); toast(eu.nom + ' est de nouveau dans la liste.'); render(); break;
     case 'filter': ui.filter = v; render(); break;
+    case 'school': ui.school = v || ''; render(); break;
     case 'mfilter': ui.mfilter = v; render(); break;
     case 'more-hist': ui.histN += 60; render(); break;
     case 'abs':
@@ -873,17 +1230,38 @@ document.addEventListener('click', function (ev) {
     case 'share': doShare(); break;
     case 'import-click': var fi = document.getElementById('import-file'); if (fi) fi.click(); break;
     case 'sync-now': syncState = 'attente'; syncing = false; sync(); toast('Synchronisation lancée.'); break;
+    case 'go-dette': ui.filter = 'dette'; go('students'); break;
+    case 'go-menus': go('menus'); break;
+    case 'mref': ui.mref = addDays(ui.mref || todayISO(), 7 * parseInt(v, 10)); render(); break;
+    case 'set-menu': menuForm(el.getAttribute('data-d')); break;
+    case 'add-expense': expenseForm(null); break;
+    case 'edit-expense': expenseForm(S.depenses[id]); break;
+    case 'del-expense':
+      var xd = S.depenses[id]; if (!xd) break;
+      closeSheet();
+      confirmSheet('Supprimer cette dépense ?', catName(xd.cat) + ' · ' + fcfa(xd.montant) + ' · ' + fmtDay(xd.date) + '.', 'Supprimer', function () { commit(['depenses', id], null); toast('Dépense supprimée.'); render(); });
+      break;
+    case 'emonth': ui.emonth = shiftMonth(ui.emonth || todayISO().slice(0, 7), parseInt(v, 10)); render(); break;
+    case 'rkind': ui.rkind = v; render(); break;
+    case 'rmode': ui.rmode = v; render(); break;
+    case 'rprev': ui.rref = ui.rkind === 'week' ? addDays(ui.rref || todayISO(), -7) : shiftMonth((ui.rref || todayISO()).slice(0, 7), -1) + '-01'; render(); break;
+    case 'rnext': ui.rref = ui.rkind === 'week' ? addDays(ui.rref || todayISO(), 7) : shiftMonth((ui.rref || todayISO()).slice(0, 7), 1) + '-01'; render(); break;
+    case 'new-year': newYearForm(); break;
+    case 'csv-click': var cf = document.getElementById('csv-file'); if (cf) cf.click(); break;
+    case 'wipe': wipeForm(); break;
     case 'sheet-close': closeSheet(); break;
   }
 });
 document.addEventListener('input', function (ev) {
   var t = ev.target;
   if (t.id === 'q') { ui.q = t.value; var l = document.getElementById('list'); if (l) l.innerHTML = studentListHtml(); }
+  if (t.id === 'rq') { ui.rq = t.value; var rl = document.getElementById('rlist'); if (rl) rl.innerHTML = reportStudentsHtml(); }
   if (t.id === 'mq') { ui.mq = t.value; var m = document.getElementById('mlist'); if (m) m.innerHTML = mealListHtml(); }
 });
 document.addEventListener('change', function (ev) {
   var t = ev.target;
   if (t.id === 'meal-date' && validISO(t.value)) { V.date = t.value; render(); }
+  if (t.id === 'csv-file' && t.files && t.files[0]) { doImportCsv(t.files[0]); t.value = ''; }
   if (t.id === 'import-file' && t.files && t.files[0]) { doImport(t.files[0]); t.value = ''; }
 });
 document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') { V.date = V.name === 'meals' ? V.date : todayISO(); sync(); } });
